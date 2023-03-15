@@ -19,7 +19,7 @@ pub fn spawn_youbu_bay(
     commands.spawn(PbrBundle {
         mesh: mesh_handle,
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        transform: Transform::from_translation(Vec3::new(0.0, 00.0, 0.0)),
+        transform: Transform::from_translation(Vec3::new(-128.0, 0.0, -128.0)),
         ..default()
     });
 }
