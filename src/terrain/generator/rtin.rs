@@ -6,7 +6,7 @@ use super::{
     HeightMap,
 };
 
-const ERROR_THRESHOLD: f32 = 0.1;
+const ERROR_THRESHOLD: f32 = 0.05;
 
 type Vector = Vector2<u32>;
 type Triangle = (u32, Vector, Vector, Vector);

@@ -18,22 +18,11 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_translation(Vec3::new(0.0, 100.0, 0.0)),
-        point_light: PointLight {
-            intensity: 16000.0,
-            color: Color::RED,
-            shadows_enabled: true,
-            ..default()
-        },
-        ..Default::default()
-    });
-
     commands
         .spawn(Camera3dBundle::default())
         .insert(FpsCameraBundle::new(
             FpsCameraController::default(),
-            Vec3::new(-2.0, 5.0, 5.0),
+            Vec3::new(0.0, 100.0, 0.0),
             Vec3::new(0., 0., 0.),
             Vec3::Y,
         ));

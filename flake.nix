@@ -22,6 +22,7 @@
         devShell =
           pkgs.mkShell rec {
             buildInputs = [
+
               # coding env
               nushell
               rnix-lsp
