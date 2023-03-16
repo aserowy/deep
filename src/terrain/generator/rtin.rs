@@ -11,7 +11,7 @@ const ERROR_THRESHOLD: f32 = 0.05;
 type Vector = Vector2<u32>;
 type Triangle = (u32, Vector, Vector, Vector);
 
-pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<u32>) {
+pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<u32>, Vec<[f32; 4]>) {
     assert_height_map_for_rtin(&height_map);
 
     let side_length = height_map.width();
@@ -27,11 +27,14 @@ fn generate_mesh_data(
     height_map: &HeightMap,
     grid_size: u32,
     triangles: &[Triangle],
-) -> (Vec<Vec3>, Vec<u32>) {
+) -> (Vec<Vec3>, Vec<u32>, Vec<[f32; 4]>) {
     let mut vertices = Vec::<Vec3>::new();
     let mut indices = Vec::<u32>::new();
+    let mut colors = Vec::<[f32; 4]>::new();
 
     let mut added_vertex_by_errors_index = HashMap::<usize, usize>::new();
+
+    let gradient = colorgrad::plasma();
 
     for triangle in triangles {
         for vertex in [triangle.1, triangle.2, triangle.3] {
@@ -47,11 +50,20 @@ fn generate_mesh_data(
 
                 vertices.push(Vec3::new(vertex[0] as f32, height, vertex[1] as f32));
                 indices.push(vertex_index as u32);
+
+                let color: Vec<f32> = gradient
+                    .at(height as f64)
+                    .to_rgba16()
+                    .into_iter()
+                    .map(|x| (x as f32) / u16::MAX as f32)
+                    .collect();
+
+                colors.push([color[0], color[1], color[2], color[3]]);
             }
         }
     }
 
-    (vertices, indices)
+    (vertices, indices, colors)
 }
 
 fn get_relevant_triangles(errors: &[f32], grid_size: u32) -> Vec<Triangle> {
@@ -155,26 +167,14 @@ fn get_right_child_triangle_index(index: u32) -> u32 {
     let id = index + 2;
     let level = get_level_by_id(id);
 
-    convert_id_to_index(id + (1 << level + 2) - (1 << (level + 1)))
+    (id + (1 << level + 2) - (1 << (level + 1))) - 2
 }
 
 fn get_left_child_triangle_index(index: u32) -> u32 {
     let id = index + 2;
     let level = get_level_by_id(id);
 
-    convert_id_to_index(id + (1 << (level + 2)))
-}
-
-fn convert_id_to_index(id: u32) -> u32 {
-    let level = get_level_by_id(id);
-    let first_triangle_index = get_first_triangle_index(level);
-    let index_in_level = get_index_in_level(id);
-
-    first_triangle_index + index_in_level
-}
-
-fn get_index_in_level(id: u32) -> u32 {
-    id - (1 << (get_most_significant_bit(id) - 1))
+    (id + (1 << (level + 2))) - 2
 }
 
 fn get_errors_index(grid_size: u32, vector: Vector) -> usize {
