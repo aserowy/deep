@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use bevy::{prelude::*, window::CursorGrabMode};
+use bevy_rapier3d::{prelude::*, rapier::prelude::RigidBodyType};
 use smooth_bevy_cameras::{
     controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin},
     LookTransformPlugin,
@@ -18,6 +18,7 @@ fn main() {
         .add_plugin(LookTransformPlugin)
         .add_plugin(FpsCameraPlugin::default())
         .add_systems((spawn_youbu_bay.on_startup(), setup.on_startup()))
+        .add_system(grab_mouse)
         .add_system(bevy::window::close_on_esc)
         .run();
 }
@@ -33,16 +34,16 @@ fn setup(mut commands: Commands) {
     });
 
     commands.insert_resource(AmbientLight {
-        color: Color::rgb_u8(210, 220, 240),
-        brightness: 0.33,
+        color: Color::WHITE,
+        brightness: 0.25,
     });
 
     commands
         .spawn((
             Camera3dBundle::default(),
             FogSettings {
-                color: Color::rgb_u8(210, 220, 240),
-                falloff: FogFalloff::Exponential { density: 0.001 },
+                color: Color::rgb_u8(2, 75, 134),
+                falloff: FogFalloff::Exponential { density: 0.002 },
                 ..default()
             },
         ))
@@ -51,5 +52,26 @@ fn setup(mut commands: Commands) {
             Vec3::new(0.0, 10.0, 0.0),
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::Y,
-        ));
+        ))
+        .insert(RigidBody::Dynamic)
+        .insert(Collider::ball(1.0))
+        .insert(AdditionalMassProperties::Mass(10.0));
+}
+
+fn grab_mouse(mut windows: Query<&mut Window>, mouse: Res<Input<MouseButton>>) {
+    let mut window = windows.single_mut();
+
+    if mouse.pressed(MouseButton::Right) {
+        info!("left mouse pressed");
+
+        window.cursor.visible = false;
+        window.cursor.grab_mode = CursorGrabMode::Locked;
+    }
+
+    if mouse.just_released(MouseButton::Right) {
+        info!("left mouse just released");
+
+        window.cursor.visible = true;
+        window.cursor.grab_mode = CursorGrabMode::None;
+    }
 }

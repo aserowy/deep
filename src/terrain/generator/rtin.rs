@@ -6,12 +6,12 @@ use super::{
     HeightMap,
 };
 
-const ERROR_THRESHOLD: f32 = 0.05;
+const ERROR_THRESHOLD: f32 = 0.0525;
 
 type Vector = Vector2<u32>;
 type Triangle = (u32, Vector, Vector, Vector);
 
-pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<u32>, Vec<[f32; 4]>) {
+pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<[u32; 3]>) {
     assert_height_map_for_rtin(&height_map);
 
     let side_length = height_map.width();
@@ -27,21 +27,20 @@ fn generate_mesh_data(
     height_map: &HeightMap,
     grid_size: u32,
     triangles: &[Triangle],
-) -> (Vec<Vec3>, Vec<u32>, Vec<[f32; 4]>) {
+) -> (Vec<Vec3>, Vec<[u32; 3]>) {
     let mut vertices = Vec::<Vec3>::new();
-    let mut indices = Vec::<u32>::new();
-    let mut colors = Vec::<[f32; 4]>::new();
+    let mut indices = Vec::<[u32; 3]>::new();
 
     let mut added_vertex_by_errors_index = HashMap::<usize, usize>::new();
 
-    let gradient = colorgrad::plasma();
-
     for triangle in triangles {
-        for vertex in [triangle.1, triangle.2, triangle.3] {
+        let mut triangle_indices: [u32; 3] = [0; 3];
+
+        for (index, vertex) in [triangle.1, triangle.2, triangle.3].into_iter().enumerate() {
             let vertex_errors_index = get_errors_index(grid_size, vertex);
 
             if let Some(vertex_index) = added_vertex_by_errors_index.get(&vertex_errors_index) {
-                indices.push(vertex_index.clone() as u32);
+                triangle_indices[index] = vertex_index.clone() as u32;
             } else {
                 let vertex_index = vertices.len();
                 added_vertex_by_errors_index.insert(vertex_errors_index, vertex_index);
@@ -49,21 +48,14 @@ fn generate_mesh_data(
                 let height = get_height_from_height_map(height_map, vertex);
 
                 vertices.push(Vec3::new(vertex[0] as f32, height, vertex[1] as f32));
-                indices.push(vertex_index as u32);
-
-                let color: Vec<f32> = gradient
-                    .at(height as f64)
-                    .to_rgba16()
-                    .into_iter()
-                    .map(|x| (x as f32) / u16::MAX as f32)
-                    .collect();
-
-                colors.push([color[0], color[1], color[2], color[3]]);
+                triangle_indices[index] = vertex_index as u32;
             }
         }
+
+        indices.push(triangle_indices);
     }
 
-    (vertices, indices, colors)
+    (vertices, indices)
 }
 
 fn get_relevant_triangles(errors: &[f32], grid_size: u32) -> Vec<Triangle> {
