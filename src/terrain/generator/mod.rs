@@ -7,7 +7,7 @@ mod rtin;
 mod u32;
 
 const GROUND_MULTIPLIER: f32 = 1.0;
-const HEIGHT_MULTIPLIER: f32 = 33.0;
+const HEIGHT_MULTIPLIER: f32 = 50.0;
 
 type HeightMap = ImageBuffer<Luma<u16>, Vec<u16>>;
 

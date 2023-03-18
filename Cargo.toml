@@ -5,12 +5,12 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.10", features = ["wayland"] }
+bevy_editor_pls = "0.3.0"
 bevy_rapier3d = "0.21.0"
 colorgrad = "0.6.2"
 image = "0.24.5"
 nalgebra = "0.32.2"
 rand = "0.8.0"
-smooth-bevy-cameras = "0.8.0"
 
 [profile.dev.package."*"]
 opt-level = 3
