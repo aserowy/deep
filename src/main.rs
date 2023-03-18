@@ -28,15 +28,11 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 0.25,
-    });
-
     // Sun
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             color: Color::rgb(0.98, 0.95, 0.82),
+            illuminance: 50000.0,
             shadows_enabled: true,
             ..default()
         },
@@ -51,7 +47,7 @@ fn setup(
         PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Box::default())),
             material: materials.add(StandardMaterial {
-                base_color: Color::hex("888888").unwrap(),
+                base_color: Color::rgb_u8(2, 75, 134),
                 unlit: true,
                 cull_mode: None,
                 ..default()
@@ -74,7 +70,7 @@ fn setup(
                 directional_light_color: Color::rgba(1.0, 0.95, 0.75, 0.5),
                 directional_light_exponent: 75.0,
                 falloff: FogFalloff::from_visibility_colors(
-                    512.0,
+                    768.0,
                     Color::rgb(0.35, 0.5, 0.66),
                     Color::rgb(0.8, 0.844, 1.0),
                 ),
