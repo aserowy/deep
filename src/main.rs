@@ -20,9 +20,8 @@ fn main() {
         .add_systems((spawn_youbu_bay.on_startup(), setup.on_startup()))
         .add_systems(
             (
+                control_axis_rotation,
                 control_translation,
-                control_x_axis_rotation,
-                control_z_axis_rotation,
             )
                 .chain(),
         )

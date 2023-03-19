@@ -84,7 +84,7 @@ pub fn control_translation(
     }
 }
 
-pub fn control_z_axis_rotation(
+pub fn control_axis_rotation(
     time: Res<Time>,
     windows: Query<&Window>,
     mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
@@ -93,31 +93,7 @@ pub fn control_z_axis_rotation(
 
     if let Ok((mut transform, options)) = query.get_single_mut() {
         let window = windows.single();
-        if let Some(cursor_position) = window.cursor_position() {
-            // TODO: implement velocity for nose up/down (y) and rotation (x)
-            let x_coefficient = get_relative_motion(
-                cursor_position.x,
-                window.width(),
-                options.movement_spot,
-                options.no_movement_spot,
-            );
 
-            transform.rotation = transform
-                .rotation
-                .mul_quat(Quat::from_rotation_z(x_coefficient * dt));
-        }
-    }
-}
-
-pub fn control_x_axis_rotation(
-    time: Res<Time>,
-    windows: Query<&Window>,
-    mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
-) {
-    let dt = time.delta_seconds();
-
-    if let Ok((mut transform, options)) = query.get_single_mut() {
-        let window = windows.single();
         if let Some(cursor_position) = window.cursor_position() {
             // TODO: implement velocity for nose up/down (y) and rotation (x)
             let y_coefficient = get_relative_motion(
@@ -127,9 +103,17 @@ pub fn control_x_axis_rotation(
                 options.no_movement_spot,
             );
 
+            let x_coefficient = get_relative_motion(
+                cursor_position.x,
+                window.width(),
+                options.movement_spot,
+                options.no_movement_spot,
+            );
+
             transform.rotation = transform
                 .rotation
-                .mul_quat(Quat::from_rotation_x(y_coefficient * dt));
+                .mul_quat(Quat::from_rotation_x(y_coefficient * dt))
+                .mul_quat(Quat::from_rotation_z(x_coefficient * dt));
         }
     }
 }
