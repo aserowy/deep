@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::{pbr::NotShadowCaster, prelude::*};
 use bevy_editor_pls::prelude::*;
 use bevy_rapier3d::prelude::*;
-use submarine::controller::{camera_controller, CameraController};
+use submarine::controller::*;
 use terrain::spawn_youbu_bay;
 
 mod submarine;
@@ -18,7 +18,14 @@ fn main() {
         // game
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_systems((spawn_youbu_bay.on_startup(), setup.on_startup()))
-        .add_systems((camera_controller,))
+        .add_systems(
+            (
+                control_translation,
+                control_x_axis_rotation,
+                control_z_axis_rotation,
+            )
+                .chain(),
+        )
         .add_system(bevy::window::close_on_esc)
         .run();
 }
@@ -38,7 +45,6 @@ fn setup(
         },
         transform: Transform::from_xyz(0.0, 0.0, 0.0)
             .with_rotation(Quat::from_rotation_x(-PI / 4.)),
-        // .looking_at(Vec3::new(-0.15, -0.05, 1.25), Vec3::Y),
         ..default()
     });
 
