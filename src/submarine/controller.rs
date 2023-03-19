@@ -14,6 +14,7 @@ pub struct CameraController {
     pub velocity: Vec3,
 }
 
+// TODO: split movement options and submarine properties (run_speed, velocity, friction)
 impl Default for CameraController {
     fn default() -> Self {
         Self {
