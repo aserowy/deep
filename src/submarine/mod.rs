@@ -16,6 +16,7 @@ impl Default for SubmarinePlugin {
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
         app.add_system(setup_camera.on_startup())
+            .add_system(setup_crosshair.on_startup())
             .add_systems((control_axis_rotation, control_translation).chain());
     }
 }
@@ -43,4 +44,28 @@ fn setup_camera(mut commands: Commands) {
         .insert(GravityScale(0.0))
         .insert(Collider::ball(1.0))
         .insert(AdditionalMassProperties::Mass(10.0));
+}
+
+fn setup_crosshair(mut commands: Commands, assets: Res<AssetServer>) {
+    // TODO: implement programmatic crosshair
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Auto),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn(ImageBundle {
+                image: assets.load("submarine/crosshair.png").into(),
+                style: Style {
+                    size: Size::new(Val::Px(250.0), Val::Px(250.0)),
+                    ..default()
+                },
+                ..default()
+            });
+        });
 }

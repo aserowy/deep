@@ -97,6 +97,7 @@ pub fn control_axis_rotation(
 
         if let Some(cursor_position) = window.cursor_position() {
             // TODO: implement velocity for nose up/down (y) and rotation (x)
+            // TODO: implement smoother relative motion instead of no_movement_spot
             let y_coefficient = get_relative_motion(
                 cursor_position.y,
                 window.height(),
