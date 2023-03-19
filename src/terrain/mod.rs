@@ -1,6 +1,4 @@
-use bevy::prelude::{
-    Assets, Color, Commands, Mesh, PbrBundle, ResMut, StandardMaterial, Transform, Vec3,
-};
+use bevy::prelude::*;
 use bevy::render::{mesh::Indices, render_resource::PrimitiveTopology};
 use bevy::utils::default;
 use bevy_rapier3d::prelude::{Collider, RigidBody};
@@ -9,7 +7,21 @@ use self::generator::generate_mesh;
 
 mod generator;
 
-pub fn spawn_youbu_bay(
+pub struct TerrainPlugin {}
+
+impl Default for TerrainPlugin {
+    fn default() -> Self {
+        TerrainPlugin {}
+    }
+}
+
+impl Plugin for TerrainPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(spawn_youbu_bay.on_startup());
+    }
+}
+
+fn spawn_youbu_bay(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

@@ -3,8 +3,9 @@ use std::f32::consts::PI;
 use bevy::{pbr::NotShadowCaster, prelude::*};
 use bevy_editor_pls::prelude::*;
 use bevy_rapier3d::prelude::*;
+
 use submarine::SubmarinePlugin;
-use terrain::spawn_youbu_bay;
+use terrain::TerrainPlugin;
 
 mod submarine;
 mod terrain;
@@ -17,8 +18,9 @@ fn main() {
         .add_plugin(EditorPlugin)
         // game
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(TerrainPlugin::default())
         .add_plugin(SubmarinePlugin::default())
-        .add_systems((spawn_youbu_bay.on_startup(), setup.on_startup()))
+        .add_system(setup.on_startup())
         .add_system(bevy::window::close_on_esc)
         .run();
 }
