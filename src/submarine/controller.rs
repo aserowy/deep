@@ -1,10 +1,11 @@
+use std::f32::consts::E;
+
 use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct CameraController {
     pub enabled: bool,
     pub movement_spot: f32,
-    pub no_movement_spot: f32,
     pub key_forward: KeyCode,
     pub key_back: KeyCode,
     pub key_up: KeyCode,
@@ -20,7 +21,6 @@ impl Default for CameraController {
         Self {
             enabled: true,
             movement_spot: 250.0,
-            no_movement_spot: 50.0,
             key_forward: KeyCode::W,
             key_back: KeyCode::S,
             key_up: KeyCode::D,
@@ -97,20 +97,11 @@ pub fn control_axis_rotation(
 
         if let Some(cursor_position) = window.cursor_position() {
             // TODO: implement velocity for nose up/down (y) and rotation (x)
-            // TODO: implement smoother relative motion instead of no_movement_spot
-            let y_coefficient = get_relative_motion(
-                cursor_position.y,
-                window.height(),
-                options.movement_spot,
-                options.no_movement_spot,
-            );
+            let y_coefficient =
+                get_relative_motion(cursor_position.y, window.height(), options.movement_spot);
 
-            let x_coefficient = get_relative_motion(
-                cursor_position.x,
-                window.width(),
-                options.movement_spot,
-                options.no_movement_spot,
-            );
+            let x_coefficient =
+                get_relative_motion(cursor_position.x, window.width(), options.movement_spot);
 
             transform.rotation = transform
                 .rotation
@@ -120,22 +111,21 @@ pub fn control_axis_rotation(
     }
 }
 
-fn get_relative_motion(
-    position: f32,
-    domain: f32,
-    movement_spot: f32,
-    no_movement_spot: f32,
-) -> f32 {
-    let x_relative_position = domain * 0.5 - position;
-    if x_relative_position >= movement_spot {
-        1.0
-    } else if x_relative_position <= movement_spot * -1.0 {
-        -1.0
-    } else if x_relative_position.abs() <= no_movement_spot {
+fn get_relative_motion(position: f32, domain: f32, movement_spot: f32) -> f32 {
+    let blind_spot = 5.0;
+
+    let relative = domain * 0.5 - position;
+    let relative_abs = relative.abs();
+    let coefficient = if relative > 0.0 { 1.0 } else { -1.0 };
+
+    if relative_abs >= movement_spot {
+        1.0 * coefficient
+    } else if relative_abs <= blind_spot {
         0.0
-    } else if x_relative_position > 0.0 {
-        (x_relative_position - no_movement_spot) / (movement_spot - no_movement_spot)
     } else {
-        (x_relative_position + no_movement_spot) / (movement_spot - no_movement_spot)
+        // logistic function
+        1.0 / (1.0
+            + E.powf(5.0 - 10.0 * (relative_abs - blind_spot) / (movement_spot - blind_spot)))
+            * coefficient
     }
 }
