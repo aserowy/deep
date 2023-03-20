@@ -21,11 +21,10 @@ pub fn generate_mesh(
 
     let gradient = colorgrad::CustomGradient::new()
         .html_colors(&[
-            "#7400b8ff",
-            "#6930c3ff",
-            "#5e60ceff",
-            "#64dfdfff",
-            "#80ffdbff",
+            "#7400b8",
+            "#6930c3",
+            "#5e60ce",
+            "#64dfdf",
         ])
         .build()
         .unwrap();
