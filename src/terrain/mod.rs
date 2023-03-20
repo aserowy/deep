@@ -4,8 +4,13 @@ use bevy::utils::default;
 use bevy_rapier3d::prelude::{Collider, RigidBody};
 
 use self::generator::generate_mesh;
+use self::sky::SkyPlugin;
 
 mod generator;
+mod sky;
+
+const GROUND_MULTIPLIER: f32 = 1.0;
+const HEIGHT_MULTIPLIER: f32 = 50.0;
 
 pub struct TerrainPlugin {}
 
@@ -17,7 +22,8 @@ impl Default for TerrainPlugin {
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(spawn_youbu_bay.on_startup());
+        app.add_plugin(SkyPlugin::default())
+            .add_system(spawn_youbu_bay.on_startup());
     }
 }
 
@@ -26,8 +32,12 @@ fn spawn_youbu_bay(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let height_map_path = "assets/height_maps/youbu_bay.png";
-    let (mesh_vertices, mesh_indices, colors) = generate_mesh(height_map_path);
+    let (mesh_vertices, mesh_indices, colors) = generate_mesh(
+        "assets/height_maps/youbu_bay.png",
+        HEIGHT_MULTIPLIER,
+        GROUND_MULTIPLIER,
+    );
+
     let mesh = generate_mesh_from_base_vectors(mesh_vertices.clone(), mesh_indices.clone(), colors);
     let mesh_handle = meshes.add(mesh);
 
@@ -36,11 +46,13 @@ fn spawn_youbu_bay(
             mesh: mesh_handle,
             material: materials.add(StandardMaterial {
                 base_color: Color::rgb(1.0, 1.0, 1.0).into(),
-                perceptual_roughness: 1.0,
-                reflectance: 1.0,
                 ..default()
             }),
-            transform: Transform::from_translation(Vec3::new(-256.0, 0.0, -256.0)),
+            transform: Transform::from_translation(Vec3::new(
+                -256.0,
+                HEIGHT_MULTIPLIER * -0.75,
+                -256.0,
+            )),
             ..default()
         })
         .insert(RigidBody::Fixed)

@@ -6,12 +6,13 @@ use self::rtin::generate_mesh_with_rtin;
 mod rtin;
 mod u32;
 
-const GROUND_MULTIPLIER: f32 = 1.0;
-const HEIGHT_MULTIPLIER: f32 = 50.0;
-
 type HeightMap = ImageBuffer<Luma<u16>, Vec<u16>>;
 
-pub fn generate_mesh(height_map_path: &str) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 4]>) {
+pub fn generate_mesh(
+    height_map_path: &str,
+    height_multiplier: f32,
+    ground_multiplier: f32,
+) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 4]>) {
     let height_map = retrieve_heigth_map(height_map_path);
     let (vertices, indices) = generate_mesh_with_rtin(height_map);
 
@@ -22,9 +23,9 @@ pub fn generate_mesh(height_map_path: &str) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f
 
     for vertex in vertices {
         converted_vertices.push(Vec3::new(
-            vertex.x * GROUND_MULTIPLIER,
-            vertex.y * HEIGHT_MULTIPLIER,
-            vertex.z * GROUND_MULTIPLIER,
+            vertex.x * ground_multiplier,
+            vertex.y * height_multiplier,
+            vertex.z * ground_multiplier,
         ));
 
         let color: Vec<f32> = gradient

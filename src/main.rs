@@ -1,6 +1,4 @@
-use std::f32::consts::PI;
-
-use bevy::{pbr::NotShadowCaster, prelude::*};
+use bevy::prelude::*;
 use bevy_editor_pls::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -20,12 +18,12 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(TerrainPlugin::default())
         .add_plugin(SubmarinePlugin::default())
-        .add_system(setup.on_startup())
+        // .add_system(setup.on_startup())
         .add_system(bevy::window::close_on_esc)
         .run();
 }
 
-fn setup(
+/* fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -58,4 +56,4 @@ fn setup(
         },
         NotShadowCaster,
     ));
-}
+} */
