@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bevy::{
+    pbr::CascadeShadowConfigBuilder,
     prelude::*,
     time::{Timer, TimerMode},
 };
@@ -8,7 +9,7 @@ use bevy_atmosphere::{
     prelude::{AtmosphereModel, AtmospherePlugin, Nishita},
     system_param::AtmosphereMut,
 };
-use bevy_water::{WaterSettings, WaterPlugin};
+use bevy_water::{WaterPlugin, WaterSettings};
 
 const WATER_HEIGHT: f32 = 5.0;
 
@@ -52,6 +53,11 @@ fn setup(mut commands: Commands) {
                 shadows_enabled: true,
                 ..default()
             },
+            cascade_shadow_config: CascadeShadowConfigBuilder {
+                num_cascades: 10,
+                ..default()
+            }
+            .build(),
             ..default()
         })
         .insert(Sun);

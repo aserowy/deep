@@ -1,4 +1,4 @@
-use bevy::{prelude::Vec3, utils::HashMap};
+use bevy::prelude::{info, Vec3};
 use nalgebra::Vector2;
 
 use super::{
@@ -12,7 +12,7 @@ type Vector = Vector2<u32>;
 type Triangle = (u32, Vector, Vector, Vector);
 
 // FIX: one triangle (last?) will not get added to mesh
-pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<[u32; 3]>) {
+pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>) {
     assert_height_map_for_rtin(&height_map);
 
     let side_length = height_map.width();
@@ -21,42 +21,51 @@ pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<[u32; 3
     let errors = generate_errors(&height_map, side_length, grid_size);
     let relevant_triangles = get_relevant_triangles(&errors, grid_size);
 
-    generate_mesh_data(&height_map, grid_size, &relevant_triangles)
+    generate_mesh_data(&height_map, &relevant_triangles)
 }
 
 fn generate_mesh_data(
     height_map: &HeightMap,
-    grid_size: u32,
     triangles: &[Triangle],
-) -> (Vec<Vec3>, Vec<[u32; 3]>) {
+) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>) {
     let mut vertices = Vec::<Vec3>::new();
     let mut indices = Vec::<[u32; 3]>::new();
-
-    let mut added_vertex_by_errors_index = HashMap::<usize, usize>::new();
 
     for triangle in triangles {
         let mut triangle_indices: [u32; 3] = [0; 3];
 
         for (index, vertex) in [triangle.1, triangle.2, triangle.3].into_iter().enumerate() {
-            let vertex_errors_index = get_errors_index(grid_size, vertex);
+            let vertex_index = vertices.len();
+            let height = get_height_from_height_map(height_map, vertex);
 
-            if let Some(vertex_index) = added_vertex_by_errors_index.get(&vertex_errors_index) {
-                triangle_indices[index] = vertex_index.clone() as u32;
-            } else {
-                let vertex_index = vertices.len();
-                added_vertex_by_errors_index.insert(vertex_errors_index, vertex_index);
-
-                let height = get_height_from_height_map(height_map, vertex);
-
-                vertices.push(Vec3::new(vertex[0] as f32, height, vertex[1] as f32));
-                triangle_indices[index] = vertex_index as u32;
-            }
+            vertices.push(Vec3::new(vertex[0] as f32, height, vertex[1] as f32));
+            triangle_indices[index] = vertex_index as u32;
         }
 
         indices.push(triangle_indices);
     }
 
-    (vertices, indices)
+    let normals = calculate_normals(&vertices, &indices);
+
+    info!("{}/{}/{}", vertices.len(), indices.len(), normals.len());
+
+    (vertices, indices, normals)
+}
+
+// TODO: calculate_normals with cached positions
+// https://github.com/aserowy/deep/blob/22af0e1ec4132f0fd05e426ad4d18cafbdfbd6b0/src/terrain/generator/rtin.rs#L35
+fn calculate_normals(vertices: &[Vec3], indices: &[[u32; 3]]) -> Vec<[f32; 3]> {
+    let mut normals = Vec::<[f32; 3]>::new();
+    for vertex_indicies in indices {
+        let a = vertices[vertex_indicies[0] as usize];
+        let b = vertices[vertex_indicies[1] as usize];
+        let c = vertices[vertex_indicies[2] as usize];
+        let normal = (b - a).cross(c - a).normalize();
+
+        normals.push([normal.x, normal.y, normal.z]);
+    }
+
+    normals.into_iter().flat_map(|normal| [normal; 3]).collect()
 }
 
 fn get_relevant_triangles(errors: &[f32], grid_size: u32) -> Vec<Triangle> {

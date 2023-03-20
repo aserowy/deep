@@ -12,9 +12,9 @@ pub fn generate_mesh(
     height_map_path: &str,
     height_multiplier: f32,
     ground_multiplier: f32,
-) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 4]>) {
+) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>, Vec<[f32; 4]>) {
     let height_map = retrieve_heigth_map(height_map_path);
-    let (vertices, indices) = generate_mesh_with_rtin(height_map);
+    let (vertices, indices, normals) = generate_mesh_with_rtin(height_map);
 
     let mut colors = Vec::<[f32; 4]>::new();
     let mut converted_vertices: Vec<Vec3> = Vec::new();
@@ -38,7 +38,7 @@ pub fn generate_mesh(
         colors.push([color[0], color[1], color[2], color[3]]);
     }
 
-    (converted_vertices, indices, colors)
+    (converted_vertices, indices, normals, colors)
 }
 
 fn retrieve_heigth_map(height_map_path: &str) -> HeightMap {
