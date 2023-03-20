@@ -32,12 +32,14 @@ fn setup_camera(mut commands: Commands) {
             // TODO: add AtmosphereCamera handling to sky.rs
             AtmosphereCamera::default(),
             CameraController::default(),
-            /* FogSettings {
-                color: Color::rgba(0.1, 0.2, 0.4, 1.0),
-                directional_light_color: Color::rgba(1.0, 0.95, 0.75, 0.5),
-                directional_light_exponent: 5.0,
-                falloff: FogFalloff::from_visibility(256.0),
-            }, */
+            FogSettings {
+                color: Color::rgb(0.0, 0.36, 0.45),
+                falloff: FogFalloff::from_visibility_color(
+                    256.0,
+                    Color::rgb(0.35, 0.5, 0.66),
+                ),
+                ..default()
+            },
         ))
         .insert(RigidBody::Dynamic)
         .insert(GravityScale(0.0))

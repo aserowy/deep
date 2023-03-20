@@ -19,7 +19,16 @@ pub fn generate_mesh(
     let mut colors = Vec::<[f32; 4]>::new();
     let mut converted_vertices: Vec<Vec3> = Vec::new();
 
-    let gradient = colorgrad::inferno();
+    let gradient = colorgrad::CustomGradient::new()
+        .html_colors(&[
+            "#7400b8ff",
+            "#6930c3ff",
+            "#5e60ceff",
+            "#64dfdfff",
+            "#80ffdbff",
+        ])
+        .build()
+        .unwrap();
 
     for vertex in vertices {
         converted_vertices.push(Vec3::new(
