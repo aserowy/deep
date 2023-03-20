@@ -8,6 +8,9 @@ use bevy_atmosphere::{
     prelude::{AtmosphereModel, AtmospherePlugin, Nishita},
     system_param::AtmosphereMut,
 };
+use bevy_water::{WaterSettings, WaterPlugin};
+
+const WATER_HEIGHT: f32 = 5.0;
 
 pub struct SkyPlugin {}
 
@@ -20,6 +23,7 @@ impl Default for SkyPlugin {
 impl Plugin for SkyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa::Sample4)
+            // sky
             .insert_resource(AtmosphereModel::default())
             .insert_resource(CycleTimer(Timer::new(
                 Duration::from_millis(50),
@@ -27,7 +31,12 @@ impl Plugin for SkyPlugin {
             )))
             .add_plugin(AtmospherePlugin)
             .add_system(setup.on_startup())
-            .add_system(daylight_cycle);
+            .add_system(daylight_cycle)
+            // water
+            .insert_resource(WaterSettings {
+                height: WATER_HEIGHT,
+            })
+            .add_plugin(WaterPlugin);
     }
 }
 #[derive(Component)]

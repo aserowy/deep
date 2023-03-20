@@ -46,6 +46,8 @@ fn spawn_youbu_bay(
             mesh: mesh_handle,
             material: materials.add(StandardMaterial {
                 base_color: Color::rgb(1.0, 1.0, 1.0).into(),
+                metallic: 10.0,
+                perceptual_roughness: 10.0,
                 ..default()
             }),
             transform: Transform::from_translation(Vec3::new(
