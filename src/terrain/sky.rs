@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::{
     prelude::*,
-    time::{Stopwatch, Timer, TimerMode},
+    time::{Timer, TimerMode},
 };
 use bevy_atmosphere::{
     prelude::{AtmosphereModel, AtmospherePlugin, Nishita},
@@ -21,7 +21,10 @@ impl Plugin for SkyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa::Sample4)
             .insert_resource(AtmosphereModel::default())
-            .insert_resource(CycleTimer::new(Duration::from_millis(50), 10.0))
+            .insert_resource(CycleTimer(Timer::new(
+                Duration::from_millis(50),
+                TimerMode::Repeating,
+            )))
             .add_plugin(AtmospherePlugin)
             .add_system(setup.on_startup())
             .add_system(daylight_cycle);
@@ -31,30 +34,7 @@ impl Plugin for SkyPlugin {
 struct Sun;
 
 #[derive(Resource)]
-struct CycleTimer {
-    update: Timer,
-    time: Stopwatch,
-    speed: f32,
-}
-
-impl CycleTimer {
-    pub fn new(duration: Duration, speed: f32) -> Self {
-        Self {
-            update: Timer::new(duration, TimerMode::Repeating),
-            time: Stopwatch::new(),
-            speed,
-        }
-    }
-
-    pub fn tick(&mut self, delta: Duration) {
-        self.update.tick(delta);
-        self.time.tick(delta.mul_f32(self.speed));
-    }
-
-    pub fn time(&self) -> f32 {
-        self.time.elapsed().as_millis() as f32 / 2000.0
-    }
-}
+struct CycleTimer(Timer);
 
 fn setup(mut commands: Commands) {
     commands
@@ -74,16 +54,16 @@ fn daylight_cycle(
     mut timer: ResMut<CycleTimer>,
     time: Res<Time>,
 ) {
-    timer.tick(time.delta());
+    timer.0.tick(time.delta());
 
-    let mut pos = atmosphere.sun_position;
-    let t = timer.time();
-    pos.y = t.sin();
-    pos.z = t.cos();
-    atmosphere.sun_position = pos;
+    if timer.0.finished() {
+        // TODO: / 20.0 manipulates the duration: refactor into Duration of one day/night cycle
+        let t = time.elapsed_seconds_wrapped() as f32 / 20.0;
+        atmosphere.sun_position = Vec3::new(0., t.sin(), t.cos());
 
-    if let Some((mut light_trans, mut directional)) = query.single_mut().into() {
-        light_trans.rotation = Quat::from_rotation_x(-pos.y.atan2(pos.z));
-        directional.illuminance = t.sin().max(0.0).powf(2.0) * 100000.0;
+        if let Some((mut light_trans, mut directional)) = query.single_mut().into() {
+            light_trans.rotation = Quat::from_rotation_x(-t.sin().atan2(t.cos()));
+            directional.illuminance = t.sin().max(0.0).powf(2.0) * 100000.0;
+        }
     }
 }
