@@ -24,7 +24,6 @@
             buildInputs = [
 
               # coding env
-              nushell
               rnix-lsp
               rust-analyzer
               rust-stable
