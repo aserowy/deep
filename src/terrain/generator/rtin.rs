@@ -9,12 +9,11 @@ use super::{
     HeightMap,
 };
 
-const ERROR_THRESHOLD: f32 = 0.0525;
+const ERROR_THRESHOLD: f32 = 0.064;
 
 type Vector = Vector2<u32>;
 type Triangle = (u32, Vector, Vector, Vector);
 
-// FIX: one triangle (last?) will not get added to mesh
 pub fn generate_mesh_with_rtin(height_map: HeightMap) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>) {
     assert_height_map_for_rtin(&height_map);
 

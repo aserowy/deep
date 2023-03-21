@@ -10,7 +10,7 @@ mod generator;
 mod sky;
 
 const GROUND_MULTIPLIER: f32 = 1.0;
-const HEIGHT_MULTIPLIER: f32 = 50.0;
+const HEIGHT_MULTIPLIER: f32 = 64.0;
 
 pub struct TerrainPlugin {}
 
