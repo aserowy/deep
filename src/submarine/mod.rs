@@ -23,28 +23,29 @@ impl Plugin for SubmarinePlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands
-        .spawn((
-            Camera3dBundle {
-                transform: Transform::from_xyz(5.0, 0.0, 5.0),
-                ..default()
-            },
-            // TODO: add AtmosphereCamera handling to sky.rs
-            AtmosphereCamera::default(),
-            CameraController::default(),
-            FogSettings {
-                color: Color::rgb(0.0, 0.36, 0.45),
-                falloff: FogFalloff::from_visibility_color(
-                    256.0,
-                    Color::rgb(0.35, 0.5, 0.66),
-                ),
-                ..default()
-            },
-        ))
-        .insert(RigidBody::Dynamic)
-        .insert(GravityScale(0.0))
-        .insert(Collider::ball(1.0))
-        .insert(AdditionalMassProperties::Mass(10.0));
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(5.0, 0.0, 5.0),
+            ..default()
+        },
+        // TODO: add AtmosphereCamera handling to sky.rs
+        AtmosphereCamera::default(),
+        CameraController::default(),
+        FogSettings {
+            color: Color::rgb(0.0, 0.36, 0.45),
+            falloff: FogFalloff::from_visibility_color(256.0, Color::rgb(0.35, 0.5, 0.66)),
+            ..default()
+        },
+        RigidBody::Dynamic,
+        ExternalForce::default(),
+        Damping {
+            linear_damping: 2.0,
+            angular_damping: 1.0,
+        },
+        GravityScale(0.0),
+        Collider::ball(3.0),
+        AdditionalMassProperties::Mass(10.0),
+    ));
 }
 
 fn setup_crosshair(mut commands: Commands, assets: Res<AssetServer>) {

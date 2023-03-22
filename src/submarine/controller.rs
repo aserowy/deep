@@ -1,18 +1,21 @@
 use std::f32::consts::E;
 
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::ExternalForce;
 
 #[derive(Component)]
 pub struct CameraController {
     pub enabled: bool,
     pub movement_spot: f32,
-    pub key_forward: KeyCode,
-    pub key_back: KeyCode,
+    pub key_thrust_positiv: KeyCode,
+    pub key_thrust_negative: KeyCode,
+    pub key_thrust_zero: KeyCode,
     pub key_up: KeyCode,
     pub key_down: KeyCode,
-    pub run_speed: f32,
-    pub friction: f32,
-    pub velocity: Vec3,
+    pub forward_thrust: f32,
+    pub forward_thrust_max: f32,
+    pub upward_thrust: f32,
+    pub upward_thrust_max: f32,
 }
 
 // TODO: split movement options and submarine properties (run_speed, velocity, friction)
@@ -21,13 +24,15 @@ impl Default for CameraController {
         Self {
             enabled: true,
             movement_spot: 250.0,
-            key_forward: KeyCode::W,
-            key_back: KeyCode::S,
+            key_thrust_positiv: KeyCode::W,
+            key_thrust_negative: KeyCode::S,
+            key_thrust_zero: KeyCode::Q,
             key_up: KeyCode::D,
             key_down: KeyCode::A,
-            run_speed: 6.0,
-            friction: 0.5,
-            velocity: Vec3::ZERO,
+            forward_thrust: 0.0,
+            forward_thrust_max: 2500.0,
+            upward_thrust: 0.0,
+            upward_thrust_max: 1000.0,
         }
     }
 }
@@ -35,73 +40,89 @@ impl Default for CameraController {
 pub fn control_translation(
     time: Res<Time>,
     key_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
+    mut query: Query<(&mut ExternalForce, &Transform, &mut CameraController), With<Camera>>,
 ) {
     let dt = time.delta_seconds();
 
-    if let Ok((mut transform, mut options)) = query.get_single_mut() {
+    if let Ok((mut force, transform, mut options)) = query.get_single_mut() {
         if !options.enabled {
             return;
         }
 
-        // Handle key input
-        let mut axis_input = Vec3::ZERO;
-        if key_input.pressed(options.key_forward) {
-            axis_input.z += 1.0;
-        }
-        if key_input.pressed(options.key_back) {
-            axis_input.z -= 1.0;
-        }
-        if key_input.pressed(options.key_up) {
-            axis_input.y += 1.0;
-        }
-        if key_input.pressed(options.key_down) {
-            axis_input.y -= 1.0;
+        let current_forward_thrust = options.forward_thrust;
+        let current_upward_thrust = options.upward_thrust;
+
+        if key_input.pressed(options.key_thrust_positiv) {
+            options.forward_thrust += 1750.0 * dt;
         }
 
-        // Apply movement update
-        if axis_input != Vec3::ZERO {
-            /* let max_speed = if key_input.pressed(options.key_run) {
-                options.run_speed
+        if key_input.pressed(options.key_thrust_negative) {
+            options.forward_thrust -= 1750.0 * dt;
+        }
+
+        if options.forward_thrust.abs() > options.forward_thrust_max {
+            let coefficient = if options.forward_thrust > 0.0 {
+                1.0
             } else {
-                options.walk_speed
-            }; */
-            options.velocity = axis_input.normalize() * options.run_speed; // max_speed;
-        } else {
-            let friction = options.friction.clamp(0.0, 1.0);
-            options.velocity *= 1.0 - friction;
-            if options.velocity.length_squared() < 1e-6 {
-                options.velocity = Vec3::ZERO;
-            }
+                -1.0
+            };
+
+            options.forward_thrust = options.forward_thrust_max * coefficient;
         }
 
-        let forward = transform.forward();
-        let right = transform.right();
-        let up = transform.up();
+        if key_input.pressed(options.key_thrust_zero) {
+            options.forward_thrust = 0.0;
+        }
 
-        transform.translation += options.velocity.x * dt * right
-            + options.velocity.y * dt * up
-            + options.velocity.z * dt * forward;
+        if key_input.pressed(options.key_up) {
+            options.upward_thrust = options.upward_thrust_max;
+        }
+
+        if key_input.pressed(options.key_down) {
+            options.upward_thrust = options.upward_thrust_max * -1.0;
+        }
+
+        if key_input.just_released(options.key_up) || key_input.just_released(options.key_down) {
+            options.upward_thrust = 0.0;
+        }
+
+        if options.forward_thrust != current_forward_thrust
+            || options.upward_thrust != current_upward_thrust
+        {
+            force.force =
+                get_current_force(&transform, options.forward_thrust, options.upward_thrust);
+
+            info!("{}", options.forward_thrust)
+        }
     }
+}
+
+fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: f32) -> Vec3 {
+    let forward = transform.forward().normalize();
+    let upward = transform.up().normalize();
+
+    forward * forward_thrust + upward * upward_thrust
 }
 
 pub fn control_axis_rotation(
     time: Res<Time>,
     windows: Query<&Window>,
-    mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
+    mut query: Query<(&mut ExternalForce, &mut Transform, &mut CameraController), With<Camera>>,
 ) {
     let dt = time.delta_seconds();
 
-    if let Ok((mut transform, options)) = query.get_single_mut() {
+    if let Ok((mut force, mut transform, options)) = query.get_single_mut() {
         let window = windows.single();
 
         if let Some(cursor_position) = window.cursor_position() {
-            // TODO: implement velocity for nose up/down (y) and rotation (x)
             let y_coefficient =
                 get_relative_motion(cursor_position.y, window.height(), options.movement_spot);
 
             let x_coefficient =
                 get_relative_motion(cursor_position.x, window.width(), options.movement_spot);
+
+            force.force =
+                get_current_force(&transform, options.forward_thrust, options.upward_thrust);
 
             transform.rotation = transform
                 .rotation

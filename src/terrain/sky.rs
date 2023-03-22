@@ -54,7 +54,7 @@ fn setup(mut commands: Commands) {
                 ..default()
             },
             cascade_shadow_config: CascadeShadowConfigBuilder {
-                num_cascades: 10,
+                num_cascades: 8,
                 ..default()
             }
             .build(),
