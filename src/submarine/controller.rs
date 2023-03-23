@@ -16,6 +16,10 @@ pub struct CameraController {
     pub forward_thrust_max: f32,
     pub upward_thrust: f32,
     pub upward_thrust_max: f32,
+    pub nose_thrust: f32,
+    pub nose_thrust_max: f32,
+    pub spin_thrust: f32,
+    pub spin_thrust_max: f32,
 }
 
 // TODO: split movement options and submarine properties (run_speed, velocity, friction)
@@ -33,6 +37,10 @@ impl Default for CameraController {
             forward_thrust_max: 2500.0,
             upward_thrust: 0.0,
             upward_thrust_max: 1000.0,
+            nose_thrust: 0.0,
+            nose_thrust_max: 500.0,
+            spin_thrust: 0.0,
+            spin_thrust_max: 500.0,
         }
     }
 }
@@ -91,8 +99,6 @@ pub fn control_translation(
         {
             force.force =
                 get_current_force(&transform, options.forward_thrust, options.upward_thrust);
-
-            info!("{}", options.forward_thrust)
         }
     }
 }
@@ -105,39 +111,41 @@ fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: 
 }
 
 pub fn control_axis_rotation(
-    time: Res<Time>,
     windows: Query<&Window>,
     mut query: Query<(&mut ExternalForce, &mut Transform, &mut CameraController), With<Camera>>,
 ) {
-    let dt = time.delta_seconds();
-
-    if let Ok((mut force, mut transform, options)) = query.get_single_mut() {
+    if let Ok((mut force, transform, mut options)) = query.get_single_mut() {
         let window = windows.single();
 
         if let Some(cursor_position) = window.cursor_position() {
-            let y_coefficient =
-                get_relative_motion(cursor_position.y, window.height(), options.movement_spot);
-
-            let x_coefficient =
-                get_relative_motion(cursor_position.x, window.width(), options.movement_spot);
-
             force.force =
                 get_current_force(&transform, options.forward_thrust, options.upward_thrust);
 
-            transform.rotation = transform
-                .rotation
-                .mul_quat(Quat::from_rotation_x(y_coefficient * dt))
-                .mul_quat(Quat::from_rotation_z(x_coefficient * dt));
+            let current_spin_thrust = options.spin_thrust;
+            let current_nose_thrust = options.nose_thrust;
+
+            options.spin_thrust = options.spin_thrust_max
+                * get_torque_coefficient(cursor_position.x, window.width(), options.movement_spot);
+
+            options.nose_thrust = options.nose_thrust_max
+                * get_torque_coefficient(cursor_position.y, window.height(), options.movement_spot);
+
+            if options.spin_thrust != current_spin_thrust
+                || options.nose_thrust != current_nose_thrust
+            {
+                force.torque = transform.forward().normalize() * options.spin_thrust
+                    + transform.left().normalize() * options.nose_thrust;
+            }
         }
     }
 }
 
-fn get_relative_motion(position: f32, domain: f32, movement_spot: f32) -> f32 {
+fn get_torque_coefficient(position: f32, domain: f32, movement_spot: f32) -> f32 {
     let blind_spot = 5.0;
 
     let relative = domain * 0.5 - position;
     let relative_abs = relative.abs();
-    let coefficient = if relative > 0.0 { 1.0 } else { -1.0 };
+    let coefficient = if relative < 0.0 { 1.0 } else { -1.0 };
 
     if relative_abs >= movement_spot {
         1.0 * coefficient
