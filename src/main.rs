@@ -10,6 +10,7 @@ mod terrain;
 
 fn main() {
     App::new()
+        .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
         // debug
         // .add_plugin(RapierDebugRenderPlugin::default())

@@ -1094,16 +1094,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_water"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "548d0a46c696ffd4de947d5524ac4e9876cf4bf27e2eed34fea7289e490b5484"
-dependencies = [
- "anyhow",
- "bevy",
-]
-
-[[package]]
 name = "bevy_window"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1611,7 +1601,6 @@ dependencies = [
  "bevy_atmosphere",
  "bevy_editor_pls",
  "bevy_rapier3d",
- "bevy_water",
  "colorgrad",
  "image",
  "nalgebra",
