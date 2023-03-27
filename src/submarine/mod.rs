@@ -7,7 +7,7 @@ use bevy_rapier3d::prelude::*;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
-use self::controller::{control_axis_rotation, control_translation, CameraController};
+use self::controller::{control_axis_rotation, control_translation, SettingsComponent, ThrustComponent};
 
 mod controller;
 
@@ -29,7 +29,6 @@ impl Plugin for SubmarinePlugin {
 fn setup_camera(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut standard_materials: ResMut<Assets<StandardMaterial>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
 ) {
     commands
@@ -58,7 +57,8 @@ fn setup_camera(
                 visibility: Visibility::Visible,
                 ..default()
             },
-            CameraController::default(),
+            SettingsComponent::default(),
+            ThrustComponent::default(),
             // physics
             RigidBody::Dynamic,
             ExternalForce::default(),
@@ -73,18 +73,7 @@ fn setup_camera(
         .with_children(|parent| {
             // hud
             parent.spawn(MaterialMeshBundle {
-                mesh: meshes.add(Circle::new(0.001).into()),
-                material: standard_materials.add(StandardMaterial {
-                    base_color: Color::WHITE.into(),
-                    unlit: true,
-                    ..default()
-                }),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
-            });
-
-            parent.spawn(MaterialMeshBundle {
-                mesh: meshes.add(LineStrip::from(Circle::new(0.05)).into()),
+                mesh: meshes.add(LineStrip::from(Circle::new(0.002)).into()),
                 material: line_materials.add(LineMaterial {
                     color: Color::WHITE.into(),
                 }),
@@ -92,16 +81,15 @@ fn setup_camera(
                 ..default()
             });
 
-            /* parent.spawn(NodeBundle {
-                node: todo!(),
-                style: todo!(),
-                background_color: todo!(),
-                focus_policy: todo!(),
-                transform: todo!(),
-                global_transform: todo!(),
-                visibility: todo!(),
-                computed_visibility: todo!(),
-                z_index: todo!(),
-            }); */
+            parent.spawn(MaterialMeshBundle {
+                // TODO: calculate circle size from options.movement_spot (0.075 fits an 125 spot)
+                mesh: meshes.add(LineStrip::from(Circle::new(0.075)).into()),
+                material: line_materials.add(LineMaterial {
+                    color: Color::WHITE.into(),
+                }),
+                transform: Transform::from_xyz(0.0, 0.0, -1.0),
+                ..default()
+            });
+
         });
 }
