@@ -10,7 +10,7 @@ use self::{
         control_axis_rotation, control_translation, ForwardThrustChangedEvent, SettingsComponent,
         ThrustComponent,
     },
-    hud::{setup_hud, update_on_forward_thrust_changed_event},
+    hud::{setup_hud, update_on_forward_thrust_changed_event, update_velocity},
 };
 
 mod controller;
@@ -34,6 +34,7 @@ impl Plugin for SubmarinePlugin {
                 (
                     control_axis_rotation,
                     control_translation,
+                    update_velocity,
                     update_on_forward_thrust_changed_event,
                 )
                     .chain(),
@@ -60,7 +61,7 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                 ..default()
             },
             BloomSettings {
-                intensity: 0.25, // the default is 0.3
+                intensity: 0.25,
                 ..default()
             },
             FogSettings {
@@ -79,6 +80,7 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
             // physics
             RigidBody::Dynamic,
             ExternalForce::default(),
+            Velocity::default(),
             Damping {
                 linear_damping: 2.0,
                 angular_damping: 1.0,

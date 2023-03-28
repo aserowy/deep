@@ -1,8 +1,12 @@
 use bevy::prelude::{shape::Circle, *};
+use bevy_rapier3d::prelude::Velocity;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{controller::ForwardThrustChangedEvent, PlayerSubmarineResource};
+
+#[derive(Default, Component)]
+pub struct VelocityUiComponent {}
 
 #[derive(Default, Component)]
 pub struct ThrustUiComponent {}
@@ -75,14 +79,43 @@ pub fn setup_hud(
                         .spawn(NodeBundle {
                             style: Style {
                                 flex_direction: FlexDirection::Column,
+                                gap: Size::height(Val::Px(5.0)),
                                 size: Size::all(Val::Px(100.0)),
                                 align_content: AlignContent::FlexEnd,
-                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::FlexEnd,
+                                justify_content: JustifyContent::FlexStart,
                                 ..default()
                             },
                             ..default()
                         })
                         .with_children(|builder| {
+                            builder.spawn((
+                                TextBundle::from_sections([
+                                    TextSection::new(
+                                        "24,5",
+                                        TextStyle {
+                                            font: font.clone(),
+                                            font_size: 15.0,
+                                            color: Color::WHITE,
+                                        },
+                                    ),
+                                    TextSection::new(
+                                        " m/s",
+                                        TextStyle {
+                                            font: font.clone(),
+                                            font_size: 15.0,
+                                            color: Color::WHITE,
+                                        },
+                                    ),
+                                ])
+                                .with_style(Style {
+                                    align_self: AlignSelf::FlexEnd,
+                                    margin: UiRect::right(Val::Px(12.0)),
+                                    ..default()
+                                }),
+                                VelocityUiComponent::default(),
+                            ));
+
                             builder.spawn((
                                 TextBundle::from_sections([
                                     TextSection::new(
@@ -118,48 +151,37 @@ pub fn setup_hud(
                                         },
                                     ),
                                 ])
-                                .with_style(Style { ..default() }),
+                                .with_style(Style {
+                                    align_self: AlignSelf::FlexEnd,
+                                    ..default()
+                                }),
                                 ThrustUiComponent::default(),
                             ));
                         });
 
-                    builder
-                        .spawn(NodeBundle {
-                            style: Style {
-                                flex_direction: FlexDirection::Column,
-                                size: Size::all(Val::Px(100.0)),
-                                align_content: AlignContent::FlexEnd,
-                                justify_content: JustifyContent::Center,
-                                ..default()
-                            },
+                    builder.spawn(NodeBundle {
+                        style: Style {
+                            flex_direction: FlexDirection::Column,
+                            size: Size::all(Val::Px(100.0)),
+                            align_content: AlignContent::FlexEnd,
+                            justify_content: JustifyContent::FlexStart,
                             ..default()
-                        })
-                        .with_children(|builder| {
-                            builder.spawn((
-                                TextBundle::from_sections([
-                                    TextSection::new(
-                                        "24,5",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                    TextSection::new(
-                                        " m/s",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                ])
-                                .with_style(Style { ..default() }),
-                                // ThrustUiComponent::default(),
-                            ));
-                        });
+                        },
+                        ..default()
+                    });
                 });
         });
+}
+
+pub fn update_velocity(
+    mut ui_query: Query<&mut Text, With<VelocityUiComponent>>,
+    mut velocity_query: Query<&Velocity, With<Camera>>,
+) {
+    if let Ok(mut text) = ui_query.get_single_mut() {
+        if let Ok(velocity) = velocity_query.get_single_mut() {
+            text.sections[0].value = format!("{:.2}", velocity.linvel.length());
+        }
+    }
 }
 
 pub fn update_on_forward_thrust_changed_event(
