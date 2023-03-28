@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Circle, *};
+use bevy::{
+    pbr::NotShadowCaster,
+    prelude::{shape::Circle, *},
+};
 use bevy_rapier3d::prelude::Velocity;
 
 use crate::render::line::{LineMaterial, LineStrip};
@@ -25,24 +28,30 @@ pub fn setup_hud(
     if let Some(entity) = player.entity {
         commands.entity(entity).with_children(|parent| {
             // hud
-            parent.spawn(MaterialMeshBundle {
-                mesh: meshes.add(LineStrip::from(Circle::new(0.002)).into()),
-                material: line_materials.add(LineMaterial {
-                    color: Color::WHITE.into(),
-                }),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
+            let line_material = line_materials.add(LineMaterial {
+                color: Color::WHITE.into(),
             });
 
-            parent.spawn(MaterialMeshBundle {
-                // TODO: calculate circle size from options.movement_spot (0.075 fits an 125 spot)
-                mesh: meshes.add(LineStrip::from(Circle::new(0.075)).into()),
-                material: line_materials.add(LineMaterial {
-                    color: Color::WHITE.into(),
-                }),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
-            });
+            parent.spawn((
+                MaterialMeshBundle {
+                    mesh: meshes.add(LineStrip::from(Circle::new(0.002)).into()),
+                    material: line_material.clone(),
+                    transform: Transform::from_xyz(0.0, 0.0, -1.0),
+                    ..default()
+                },
+                NotShadowCaster,
+            ));
+
+            parent.spawn((
+                MaterialMeshBundle {
+                    // TODO: calculate circle size from options.movement_spot (0.075 fits an 125 spot)
+                    mesh: meshes.add(LineStrip::from(Circle::new(0.075)).into()),
+                    material: line_material,
+                    transform: Transform::from_xyz(0.0, 0.0, -1.0),
+                    ..default()
+                },
+                NotShadowCaster,
+            ));
         });
     }
 

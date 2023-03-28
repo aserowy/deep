@@ -39,25 +39,6 @@ impl Material for LineMaterial {
 }
 
 #[derive(Debug, Clone)]
-pub struct LineList {
-    pub lines: Vec<(Vec3, Vec3)>,
-    pub close: bool,
-}
-
-impl From<LineList> for Mesh {
-    fn from(line: LineList) -> Self {
-        let mut vertices: Vec<_> = line.lines.into_iter().flat_map(|(a, b)| [a, b]).collect();
-        if line.close {
-            vertices.push(vertices[0].clone());
-        }
-
-        let mut mesh = Mesh::new(PrimitiveTopology::LineList);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
-        mesh
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct LineStrip {
     pub points: Vec<Vec3>,
     pub close: bool,
