@@ -2,14 +2,20 @@ use bevy::prelude::{shape::Circle, *};
 
 use crate::render::line::{LineMaterial, LineStrip};
 
-use super::PlayerSubmarineResource;
+use super::{
+    controller::ForwardThrustChangedEvent,
+    PlayerSubmarineResource,
+};
+
+#[derive(Default, Component)]
+pub struct ThrustUiComponent {}
 
 pub fn setup_hud(
     mut commands: Commands,
-    player: Res<PlayerSubmarineResource>,
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
+    player: Res<PlayerSubmarineResource>,
 ) {
     if !player.enabled {
         return;
@@ -39,16 +45,53 @@ pub fn setup_hud(
         });
     }
 
-    commands.spawn(TextBundle::from_section(
-        "Press Spacebar to Toggle Atmospheric Fog.\nPress S to Toggle Directional Light Fog Influence.",
-        TextStyle {
-            font: asset_server.load("fonts/monofur.ttf"),
-            font_size: 15.0,
-            color: Color::WHITE,
-        },
-    )
-    .with_style(Style {
-        position_type: PositionType::Absolute,
+    commands.spawn((
+        TextBundle::from_sections([
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: asset_server.load("fonts/monofur.ttf"),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "/",
+                TextStyle {
+                    font: asset_server.load("fonts/monofur.ttf"),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: asset_server.load("fonts/monofur.ttf"),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+        ])
+        .with_style(Style {
+            position: UiRect {
+                left: Val::Px(100.0),
+                top: Val::Px(100.0),
+                ..default()
+            },
             ..default()
-    }),);
+        }),
+        ThrustUiComponent::default(),
+    ));
+}
+
+pub fn update_on_forward_thrust_changed_event(
+    mut forward_thrust_event_reader: EventReader<ForwardThrustChangedEvent>,
+    mut query: Query<&mut Text, With<ThrustUiComponent>>,
+) {
+    if let Ok(mut text) = query.get_single_mut() {
+        for event in forward_thrust_event_reader.iter() {
+            text.sections[0].value = format!("{:.0}", event.0.forward_thrust);
+            text.sections[2].value = format!("{:.0}", event.0.forward_thrust_max);
+        }
+    }
 }

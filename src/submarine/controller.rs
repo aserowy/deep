@@ -28,9 +28,10 @@ impl Default for SettingsComponent {
     }
 }
 
-#[derive(Component)]
+#[derive(Clone, Component)]
 pub struct ThrustComponent {
     pub enabled: bool,
+    pub initialized: bool,
     pub forward_thrust: f32,
     pub forward_thrust_max: f32,
     pub upward_thrust: f32,
@@ -45,6 +46,7 @@ impl Default for ThrustComponent {
     fn default() -> Self {
         Self {
             enabled: true,
+            initialized: false,
             forward_thrust: 0.0,
             forward_thrust_max: 2500.0,
             upward_thrust: 0.0,
@@ -57,10 +59,21 @@ impl Default for ThrustComponent {
     }
 }
 
+pub struct ForwardThrustChangedEvent(pub ThrustComponent);
+
 pub fn control_translation(
+    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     time: Res<Time>,
     key_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut ExternalForce, &Transform, &mut ThrustComponent, &SettingsComponent), With<Camera>>,
+    mut query: Query<
+        (
+            &mut ExternalForce,
+            &Transform,
+            &mut ThrustComponent,
+            &SettingsComponent,
+        ),
+        With<Camera>,
+    >,
 ) {
     let dt = time.delta_seconds();
 
@@ -69,15 +82,21 @@ pub fn control_translation(
             return;
         }
 
+        if !thrust.initialized {
+            thrust.initialized = true;
+
+            forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+        }
+
         let current_forward_thrust = thrust.forward_thrust;
         let current_upward_thrust = thrust.upward_thrust;
 
         if key_input.pressed(settings.key_thrust_positiv) {
-            thrust.forward_thrust += 1750.0 * dt;
+            thrust.forward_thrust += 2000.0 * dt;
         }
 
         if key_input.pressed(settings.key_thrust_negative) {
-            thrust.forward_thrust -= 1750.0 * dt;
+            thrust.forward_thrust -= 2000.0 * dt;
         }
 
         if thrust.forward_thrust.abs() > thrust.forward_thrust_max {
@@ -109,6 +128,8 @@ pub fn control_translation(
         if thrust.forward_thrust != current_forward_thrust
             || thrust.upward_thrust != current_upward_thrust
         {
+            forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+
             force.force =
                 get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
         }
@@ -124,7 +145,15 @@ fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: 
 
 pub fn control_axis_rotation(
     windows: Query<&Window>,
-    mut query: Query<(&mut ExternalForce, &mut Transform, &mut ThrustComponent, &SettingsComponent), With<Camera>>,
+    mut query: Query<
+        (
+            &mut ExternalForce,
+            &mut Transform,
+            &mut ThrustComponent,
+            &SettingsComponent,
+        ),
+        With<Camera>,
+    >,
 ) {
     if let Ok((mut force, transform, mut thrust, settings)) = query.get_single_mut() {
         let window = windows.single();
@@ -140,7 +169,11 @@ pub fn control_axis_rotation(
                 * get_torque_coefficient(cursor_position.x, window.width(), settings.movement_spot);
 
             thrust.nose_thrust = thrust.nose_thrust_max
-                * get_torque_coefficient(cursor_position.y, window.height(), settings.movement_spot);
+                * get_torque_coefficient(
+                    cursor_position.y,
+                    window.height(),
+                    settings.movement_spot,
+                );
 
             if thrust.spin_thrust != current_spin_thrust
                 || thrust.nose_thrust != current_nose_thrust

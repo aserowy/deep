@@ -6,8 +6,11 @@ use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
 use self::{
-    controller::{control_axis_rotation, control_translation, SettingsComponent, ThrustComponent},
-    hud::setup_hud,
+    controller::{
+        control_axis_rotation, control_translation, ForwardThrustChangedEvent, SettingsComponent,
+        ThrustComponent,
+    },
+    hud::{setup_hud, update_on_forward_thrust_changed_event},
 };
 
 mod controller;
@@ -24,9 +27,17 @@ impl Default for SubmarinePlugin {
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PlayerSubmarineResource>()
+            .add_event::<ForwardThrustChangedEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(setup_hud.on_startup())
-            .add_systems((control_axis_rotation, control_translation).chain());
+            .add_systems(
+                (
+                    control_axis_rotation,
+                    control_translation,
+                    update_on_forward_thrust_changed_event,
+                )
+                    .chain(),
+            );
     }
 }
 
@@ -36,10 +47,7 @@ pub struct PlayerSubmarineResource {
     pub entity: Option<Entity>,
 }
 
-fn setup_player_submarine(
-    mut commands: Commands,
-    mut player: ResMut<PlayerSubmarineResource>,
-) {
+fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubmarineResource>) {
     let entity = commands
         .spawn((
             Camera3dBundle {
