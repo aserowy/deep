@@ -1,15 +1,17 @@
 use bevy::{
     core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
-    prelude::{shape::Circle, *},
+    prelude::*,
 };
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use crate::render::line::{LineMaterial, LineStrip};
-
-use self::controller::{control_axis_rotation, control_translation, SettingsComponent, ThrustComponent};
+use self::{
+    controller::{control_axis_rotation, control_translation, SettingsComponent, ThrustComponent},
+    hud::setup_hud,
+};
 
 mod controller;
+mod hud;
 
 pub struct SubmarinePlugin {}
 
@@ -21,17 +23,24 @@ impl Default for SubmarinePlugin {
 
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(setup_camera.on_startup())
+        app.init_resource::<PlayerSubmarineResource>()
+            .add_system(setup_player_submarine.on_startup())
+            .add_system(setup_hud.on_startup())
             .add_systems((control_axis_rotation, control_translation).chain());
     }
 }
 
-fn setup_camera(
+#[derive(Default, Resource)]
+pub struct PlayerSubmarineResource {
+    pub enabled: bool,
+    pub entity: Option<Entity>,
+}
+
+fn setup_player_submarine(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut line_materials: ResMut<Assets<LineMaterial>>,
+    mut player: ResMut<PlayerSubmarineResource>,
 ) {
-    commands
+    let entity = commands
         .spawn((
             Camera3dBundle {
                 camera: Camera {
@@ -70,26 +79,8 @@ fn setup_camera(
             Collider::ball(3.0),
             AdditionalMassProperties::Mass(10.0),
         ))
-        .with_children(|parent| {
-            // hud
-            parent.spawn(MaterialMeshBundle {
-                mesh: meshes.add(LineStrip::from(Circle::new(0.002)).into()),
-                material: line_materials.add(LineMaterial {
-                    color: Color::WHITE.into(),
-                }),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
-            });
+        .id();
 
-            parent.spawn(MaterialMeshBundle {
-                // TODO: calculate circle size from options.movement_spot (0.075 fits an 125 spot)
-                mesh: meshes.add(LineStrip::from(Circle::new(0.075)).into()),
-                material: line_materials.add(LineMaterial {
-                    color: Color::WHITE.into(),
-                }),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
-            });
-
-        });
+    player.enabled = true;
+    player.entity = Some(entity);
 }
