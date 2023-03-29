@@ -60,126 +60,193 @@ pub fn setup_hud(
         .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
                 size: Size::all(Val::Percent(100.0)),
                 ..default()
             },
             ..default()
         })
         .with_children(|builder| {
-            builder
-                .spawn(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Row,
-                        gap: Size::width(Val::Px(175.0)),
-                        margin: UiRect::new(
-                            Val::Px(0.0),
-                            Val::Px(40.0),
-                            Val::Px(250.0),
-                            Val::Px(0.0),
-                        ),
-                        ..default()
-                    },
-                    ..default()
-                })
-                .with_children(|builder| {
-                    builder
-                        .spawn(NodeBundle {
-                            style: Style {
-                                flex_direction: FlexDirection::Column,
-                                gap: Size::height(Val::Px(5.0)),
-                                size: Size::all(Val::Px(100.0)),
-                                align_content: AlignContent::FlexEnd,
-                                align_items: AlignItems::FlexEnd,
-                                justify_content: JustifyContent::FlexStart,
-                                ..default()
-                            },
-                            ..default()
-                        })
-                        .with_children(|builder| {
-                            builder.spawn((
-                                TextBundle::from_sections([
-                                    TextSection::new(
-                                        "24,5",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                    TextSection::new(
-                                        " m/s",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                ])
-                                .with_style(Style {
-                                    align_self: AlignSelf::FlexEnd,
-                                    margin: UiRect::right(Val::Px(12.0)),
-                                    ..default()
-                                }),
-                                VelocityUiComponent::default(),
-                            ));
-
-                            builder.spawn((
-                                TextBundle::from_sections([
-                                    TextSection::new(
-                                        "",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                    TextSection::new(
-                                        "/",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                    TextSection::new(
-                                        "",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                    TextSection::new(
-                                        " kN",
-                                        TextStyle {
-                                            font: font.clone(),
-                                            font_size: 15.0,
-                                            color: Color::WHITE,
-                                        },
-                                    ),
-                                ])
-                                .with_style(Style {
-                                    align_self: AlignSelf::FlexEnd,
-                                    ..default()
-                                }),
-                                ThrustUiComponent::default(),
-                            ));
-                        });
-
-                    builder.spawn(NodeBundle {
-                        style: Style {
-                            flex_direction: FlexDirection::Column,
-                            size: Size::all(Val::Px(100.0)),
-                            align_content: AlignContent::FlexEnd,
-                            justify_content: JustifyContent::FlexStart,
-                            ..default()
-                        },
-                        ..default()
-                    });
-                });
+            add_main_screen_column_nodes(builder, font.clone());
         });
+}
+
+fn add_main_screen_column_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            ..default()
+        },
+        ..default()
+    });
+
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            ..default()
+        },
+        ..default()
+    });
+
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|builder| {
+            add_lower_half_screen_column_nodes(builder, font);
+        });
+
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            ..default()
+        },
+        ..default()
+    });
+}
+
+fn add_lower_half_screen_column_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|builder| {
+            add_hud_components(builder, font.clone());
+        });
+
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|builder| {});
+}
+
+fn add_hud_components(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                gap: Size::height(Val::Px(5.0)),
+                size: Size::all(Val::Px(100.0)),
+                align_content: AlignContent::FlexEnd,
+                justify_content: JustifyContent::FlexEnd,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|builder| {
+            add_velocity_component(builder, font.clone());
+            add_thrust_component(builder, font);
+        });
+
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Px(200.0), Val::Px(100.0)),
+            ..default()
+        },
+        ..default()
+    });
+
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::all(Val::Px(100.0)),
+            ..default()
+        },
+        ..default()
+    });
+}
+
+fn add_thrust_component(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder.spawn((
+        TextBundle::from_sections([
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "/",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                " kN",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+        ])
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            ..default()
+        }),
+        ThrustUiComponent::default(),
+    ));
+}
+
+fn add_velocity_component(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder.spawn((
+        TextBundle::from_sections([
+            TextSection::new(
+                "24,5",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                " m/s",
+                TextStyle {
+                    font,
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+        ])
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            margin: UiRect::right(Val::Px(12.0)),
+            ..default()
+        }),
+        VelocityUiComponent::default(),
+    ));
 }
 
 pub fn update_velocity(
