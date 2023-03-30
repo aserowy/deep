@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::Velocity;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
-use super::{controller::ForwardThrustChangedEvent, PlayerSubmarineResource};
+use super::{controller::ForwardThrustChangedEvent, module::Module, PlayerSubmarineResource};
 
 #[derive(Default, Component)]
 pub struct VelocityUiComponent {}
@@ -19,7 +19,7 @@ pub fn setup_hud(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
-    player: Res<PlayerSubmarineResource>,
+    player: ResMut<PlayerSubmarineResource>,
 ) {
     if !player.enabled {
         return;
@@ -66,11 +66,15 @@ pub fn setup_hud(
             ..default()
         })
         .with_children(|builder| {
-            add_main_screen_column_nodes(builder, font.clone());
+            add_main_screen_column_nodes(builder, player, font.clone());
         });
 }
 
-fn add_main_screen_column_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
+fn add_main_screen_column_nodes(
+    builder: &mut ChildBuilder,
+    player: ResMut<PlayerSubmarineResource>,
+    font: Handle<Font>,
+) {
     builder.spawn(NodeBundle {
         style: Style {
             flex_direction: FlexDirection::Column,
@@ -89,57 +93,46 @@ fn add_main_screen_column_nodes(builder: &mut ChildBuilder, font: Handle<Font>) 
         ..default()
     });
 
-    builder
-        .spawn(NodeBundle {
-            style: Style {
-                flex_direction: FlexDirection::Column,
-                size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|builder| {
-            add_lower_half_screen_column_nodes(builder, font);
-        });
-
-    builder.spawn(NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Column,
-            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
-            ..default()
-        },
-        ..default()
-    });
-}
-
-fn add_lower_half_screen_column_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
     builder
         .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Center,
-                size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(12.5)),
                 ..default()
             },
             ..default()
         })
         .with_children(|builder| {
-            add_hud_components(builder, font.clone());
+            add_hud_nodes(builder, font.clone());
         });
 
     builder
         .spawn(NodeBundle {
             style: Style {
-                flex_direction: FlexDirection::Column,
-                size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::Center,
+                align_content: AlignContent::Center,
+                size: Size::new(Val::Percent(100.0), Val::Percent(12.5)),
                 ..default()
             },
             ..default()
         })
-        .with_children(|builder| {});
+        .with_children(|builder| {
+            add_module_nodes(builder, player, font);
+        });
+
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            ..default()
+        },
+        ..default()
+    });
 }
 
-fn add_hud_components(builder: &mut ChildBuilder, font: Handle<Font>) {
+fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
     builder
         .spawn(NodeBundle {
             style: Style {
@@ -153,8 +146,8 @@ fn add_hud_components(builder: &mut ChildBuilder, font: Handle<Font>) {
             ..default()
         })
         .with_children(|builder| {
-            add_velocity_component(builder, font.clone());
-            add_thrust_component(builder, font);
+            add_velocity_node(builder, font.clone());
+            add_thrust_node(builder, font);
         });
 
     builder.spawn(NodeBundle {
@@ -176,7 +169,7 @@ fn add_hud_components(builder: &mut ChildBuilder, font: Handle<Font>) {
     });
 }
 
-fn add_thrust_component(builder: &mut ChildBuilder, font: Handle<Font>) {
+fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
     builder.spawn((
         TextBundle::from_sections([
             TextSection::new(
@@ -220,11 +213,23 @@ fn add_thrust_component(builder: &mut ChildBuilder, font: Handle<Font>) {
     ));
 }
 
-fn add_velocity_component(builder: &mut ChildBuilder, font: Handle<Font>) {
+pub fn update_on_forward_thrust_changed_event(
+    mut forward_thrust_event_reader: EventReader<ForwardThrustChangedEvent>,
+    mut query: Query<&mut Text, With<ThrustUiComponent>>,
+) {
+    if let Ok(mut text) = query.get_single_mut() {
+        for event in forward_thrust_event_reader.iter() {
+            text.sections[0].value = format!("{:.0}", event.0.forward_thrust);
+            text.sections[2].value = format!("{:.0}", event.0.forward_thrust_max);
+        }
+    }
+}
+
+fn add_velocity_node(builder: &mut ChildBuilder, font: Handle<Font>) {
     builder.spawn((
         TextBundle::from_sections([
             TextSection::new(
-                "24,5",
+                "",
                 TextStyle {
                     font: font.clone(),
                     font_size: 15.0,
@@ -249,7 +254,7 @@ fn add_velocity_component(builder: &mut ChildBuilder, font: Handle<Font>) {
     ));
 }
 
-pub fn update_velocity(
+pub fn update_velocity_node(
     mut ui_query: Query<&mut Text, With<VelocityUiComponent>>,
     mut velocity_query: Query<&Velocity, With<Camera>>,
 ) {
@@ -260,14 +265,48 @@ pub fn update_velocity(
     }
 }
 
-pub fn update_on_forward_thrust_changed_event(
-    mut forward_thrust_event_reader: EventReader<ForwardThrustChangedEvent>,
-    mut query: Query<&mut Text, With<ThrustUiComponent>>,
+fn add_module_nodes(
+    builder: &mut ChildBuilder,
+    mut player: ResMut<PlayerSubmarineResource>,
+    font: Handle<Font>,
 ) {
-    if let Ok(mut text) = query.get_single_mut() {
-        for event in forward_thrust_event_reader.iter() {
-            text.sections[0].value = format!("{:.0}", event.0.forward_thrust);
-            text.sections[2].value = format!("{:.0}", event.0.forward_thrust_max);
-        }
+    for module in player.modules.iter_mut() {
+        add_module_to_module_nodes(builder, module, font.clone());
     }
+}
+
+fn add_module_to_module_nodes(builder: &mut ChildBuilder, module: &mut Module, font: Handle<Font>) {
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::all(Val::Px(100.0)),
+                justify_content: JustifyContent::Center,
+                align_content: AlignContent::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|builder| {
+            builder.spawn((
+                TextBundle::from_sections([TextSection::new(
+                    module.icon.clone(),
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 42.0,
+                        color: Color::WHITE,
+                    },
+                )])
+                .with_style(Style {
+                    margin: UiRect::right(Val::Px(8.0)),
+                    ..default()
+                }),
+            ));
+        });
+}
+
+pub fn update_modules(mut _player: ResMut<PlayerSubmarineResource>) {
+    /* if let Ok(node_entity) = query.get_single() {
+        let node = commands.get_entity(node_entity);
+        // node.unwrap().clear_children
+    } */
 }
