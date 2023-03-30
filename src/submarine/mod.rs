@@ -5,11 +5,11 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use self::{controller::*, hud::*, module::*, settings::*};
+use self::{hud::*, module::*, motion::*, settings::*};
 
-mod controller;
 mod hud;
 mod module;
+mod motion;
 mod settings;
 
 pub struct SubmarinePlugin {}
@@ -34,6 +34,7 @@ impl Plugin for SubmarinePlugin {
                     update_axis_rotation,
                     update_velocity_node,
                     update_thrust_node_on_forward_thrust_changed_event,
+                    trigger_module_action_on_key_action_event,
                     update_modules,
                 )
                     .chain(),

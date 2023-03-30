@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::Velocity;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
-use super::{controller::ForwardThrustChangedEvent, module::Module, PlayerSubmarineResource};
+use super::{module::Module, motion::ForwardThrustChangedEvent, PlayerSubmarineResource};
 
 #[derive(Default, Component)]
 pub struct VelocityUiComponent {}
