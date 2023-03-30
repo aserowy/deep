@@ -10,6 +10,8 @@ pub struct Module {
     pub id: String,
     pub icon: String,
     pub action: ModuleAction,
+    pub casttime: f32,
+    pub current_casttime: Option<f32>,
     pub cooldown: f32,
     pub current_cooldown: Option<f32>,
 }
@@ -20,6 +22,8 @@ impl Module {
             id: "mining_base".into(),
             icon: "󰜐".into(),
             action: ModuleAction::MiningMagnatide,
+            casttime: 4.0,
+            current_casttime: None,
             cooldown: 4.0,
             current_cooldown: None,
         }
@@ -30,6 +34,8 @@ impl Module {
             id: "resource_scanner_base".into(),
             icon: "󰐷".into(),
             action: ModuleAction::ResourceScan,
+            casttime: 10.0,
+            current_casttime: None,
             cooldown: 10.0,
             current_cooldown: None,
         }
@@ -46,9 +52,12 @@ pub fn trigger_module_action_on_key_action_event(
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     mut player: ResMut<PlayerSubmarineResource>,
 ) {
-    let mut module: Option<&mut Module> = None;
-
     for key_action_event in key_action_event_reader.iter() {
+        if is_module_active(&player.modules) {
+            continue;
+        }
+
+        let mut module: Option<&mut Module> = None;
         match &key_action_event.key_map.key_action {
             KeyAction::ModuleActivation01 => {
                 module = get_module_action_by_position(&mut player.modules, 0);
@@ -58,10 +67,9 @@ pub fn trigger_module_action_on_key_action_event(
             }
             _ => (),
         }
-    }
-
-    if let Some(activated_module) = module {
-        trigger_module_activation(activated_module);
+        if let Some(activated_module) = module {
+            trigger_module_activation(activated_module);
+        }
     }
 }
 
@@ -70,10 +78,11 @@ fn trigger_module_activation(module: &mut Module) {
         return;
     }
 
+    module.current_casttime = Some(module.casttime);
     module.current_cooldown = Some(module.cooldown);
 
     info!(
-        "Module {} activated with cooldown {}",
+        "Module {} activated with {} cooldown",
         module.id, module.cooldown
     );
 }
@@ -84,4 +93,8 @@ fn get_module_action_by_position(modules: &mut Vec<Module>, index: usize) -> Opt
     } else {
         None
     }
+}
+
+fn is_module_active(modules: &Vec<Module>) -> bool {
+    modules.iter().any(|mdl| mdl.current_casttime.is_some())
 }

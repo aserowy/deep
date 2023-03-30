@@ -31,9 +31,9 @@ impl Plugin for SubmarinePlugin {
                 (
                     handle_key_presses,
                     update_thrust_on_key_action_event,
+                    update_thrust_node_on_forward_thrust_changed_event,
                     update_axis_rotation,
                     update_velocity_node,
-                    update_thrust_node_on_forward_thrust_changed_event,
                     trigger_module_action_on_key_action_event,
                     update_modules,
                 )

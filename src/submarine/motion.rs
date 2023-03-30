@@ -44,19 +44,19 @@ pub fn update_thrust_on_key_action_event(
     mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     mut query: Query<(&mut ExternalForce, &Transform, &mut ThrustComponent), With<Camera>>,
 ) {
-    for key_action_event in key_action_event_reader.iter() {
-        let dt = time.delta_seconds();
+    let dt = time.delta_seconds();
 
-        if let Ok((mut force, transform, mut thrust)) = query.get_single_mut() {
-            if !thrust.enabled {
-                return;
-            }
+    if let Ok((mut force, transform, mut thrust)) = query.get_single_mut() {
+        if !thrust.enabled {
+            return;
+        }
 
-            if !thrust.initialized {
-                thrust.initialized = true;
-                forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
-            }
+        if !thrust.initialized {
+            thrust.initialized = true;
+            forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+        }
 
+        for key_action_event in key_action_event_reader.iter() {
             match key_action_event.key_map.key_action {
                 KeyAction::ThrustPositiv => {
                     handle_forward_thrust(
