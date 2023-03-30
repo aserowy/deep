@@ -213,7 +213,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
     ));
 }
 
-pub fn update_on_forward_thrust_changed_event(
+pub fn update_thrust_node_on_forward_thrust_changed_event(
     mut forward_thrust_event_reader: EventReader<ForwardThrustChangedEvent>,
     mut query: Query<&mut Text, With<ThrustUiComponent>>,
 ) {
@@ -287,20 +287,18 @@ fn add_module_to_module_nodes(builder: &mut ChildBuilder, module: &mut Module, f
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn((
-                TextBundle::from_sections([TextSection::new(
-                    module.icon.clone(),
-                    TextStyle {
-                        font: font.clone(),
-                        font_size: 42.0,
-                        color: Color::WHITE,
-                    },
-                )])
-                .with_style(Style {
-                    margin: UiRect::right(Val::Px(8.0)),
-                    ..default()
-                }),
-            ));
+            builder.spawn((TextBundle::from_sections([TextSection::new(
+                module.icon.clone(),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 42.0,
+                    color: Color::WHITE,
+                },
+            )])
+            .with_style(Style {
+                margin: UiRect::right(Val::Px(8.0)),
+                ..default()
+            }),));
         });
 }
 

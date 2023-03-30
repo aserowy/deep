@@ -5,18 +5,12 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use self::{
-    controller::{
-        control_axis_rotation, control_translation, ForwardThrustChangedEvent, SettingsComponent,
-        ThrustComponent,
-    },
-    hud::{setup_hud, update_modules, update_on_forward_thrust_changed_event, update_velocity_node},
-    module::Module,
-};
+use self::{controller::*, hud::*, module::*, settings::*};
 
 mod controller;
 mod hud;
 mod module;
+mod settings;
 
 pub struct SubmarinePlugin {}
 
@@ -30,14 +24,16 @@ impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PlayerSubmarineResource>()
             .add_event::<ForwardThrustChangedEvent>()
+            .add_event::<KeyActionEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(setup_hud.on_startup())
             .add_systems(
                 (
-                    control_axis_rotation,
-                    control_translation,
+                    handle_key_presses,
+                    update_thrust_on_key_action_event,
+                    update_axis_rotation,
                     update_velocity_node,
-                    update_on_forward_thrust_changed_event,
+                    update_thrust_node_on_forward_thrust_changed_event,
                     update_modules,
                 )
                     .chain(),
@@ -82,6 +78,38 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                 },
                 SettingsComponent::default(),
                 ThrustComponent::default(),
+                KeyMapComponent {
+                    key_actions: vec![
+                        KeyActionMap {
+                            key_code: KeyCode::W,
+                            key_action: KeyAction::ThrustPositiv,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::S,
+                            key_action: KeyAction::ThrustNegative,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::Q,
+                            key_action: KeyAction::ThrustZero,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::D,
+                            key_action: KeyAction::ThrustUp,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::A,
+                            key_action: KeyAction::ThrustDown,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::Key1,
+                            key_action: KeyAction::ModuleActivation01,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::Key2,
+                            key_action: KeyAction::ModuleActivation02,
+                        },
+                    ],
+                },
             ),
             // physics
             (
@@ -102,15 +130,7 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
     player.enabled = true;
     player.entity = Some(entity);
     player.modules = vec![
-        Module {
-            icon: "󰐷".into(),
-            cooldown: 10.0,
-            current_cooldown: 0.0,
-        },
-        Module {
-            icon: "󰜐".into(),
-            cooldown: 4.0,
-            current_cooldown: 0.0,
-        },
+        Module::new_resource_scanner_base(),
+        Module::new_mining_base(),
     ];
 }

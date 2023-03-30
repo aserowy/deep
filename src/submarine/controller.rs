@@ -3,30 +3,7 @@ use std::f32::consts::E;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::ExternalForce;
 
-#[derive(Component)]
-pub struct SettingsComponent {
-    pub enabled: bool,
-    pub movement_spot: f32,
-    pub key_thrust_positiv: KeyCode,
-    pub key_thrust_negative: KeyCode,
-    pub key_thrust_zero: KeyCode,
-    pub key_up: KeyCode,
-    pub key_down: KeyCode,
-}
-
-impl Default for SettingsComponent {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            movement_spot: 125.0,
-            key_thrust_positiv: KeyCode::W,
-            key_thrust_negative: KeyCode::S,
-            key_thrust_zero: KeyCode::Q,
-            key_up: KeyCode::D,
-            key_down: KeyCode::A,
-        }
-    }
-}
+use super::settings::*;
 
 #[derive(Clone, Component)]
 pub struct ThrustComponent {
@@ -61,78 +38,163 @@ impl Default for ThrustComponent {
 
 pub struct ForwardThrustChangedEvent(pub ThrustComponent);
 
-pub fn control_translation(
-    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
+pub fn update_thrust_on_key_action_event(
     time: Res<Time>,
-    key_input: Res<Input<KeyCode>>,
-    mut query: Query<
-        (
-            &mut ExternalForce,
-            &Transform,
-            &mut ThrustComponent,
-            &SettingsComponent,
-        ),
-        With<Camera>,
-    >,
+    mut key_action_event_reader: EventReader<KeyActionEvent>,
+    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
+    mut query: Query<(&mut ExternalForce, &Transform, &mut ThrustComponent), With<Camera>>,
 ) {
-    let dt = time.delta_seconds();
+    for key_action_event in key_action_event_reader.iter() {
+        let dt = time.delta_seconds();
 
-    if let Ok((mut force, transform, mut thrust, settings)) = query.get_single_mut() {
-        if !thrust.enabled {
-            return;
-        }
+        if let Ok((mut force, transform, mut thrust)) = query.get_single_mut() {
+            if !thrust.enabled {
+                return;
+            }
 
-        if !thrust.initialized {
-            thrust.initialized = true;
+            if !thrust.initialized {
+                thrust.initialized = true;
+                forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+            }
 
-            forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
-        }
-
-        let current_forward_thrust = thrust.forward_thrust;
-        let current_upward_thrust = thrust.upward_thrust;
-
-        if key_input.pressed(settings.key_thrust_positiv) {
-            thrust.forward_thrust += 2000.0 * dt;
-        }
-
-        if key_input.pressed(settings.key_thrust_negative) {
-            thrust.forward_thrust -= 2000.0 * dt;
-        }
-
-        if thrust.forward_thrust.abs() > thrust.forward_thrust_max {
-            let coefficient = if thrust.forward_thrust > 0.0 {
-                1.0
-            } else {
-                -1.0
+            match key_action_event.key_map.key_action {
+                KeyAction::ThrustPositiv => {
+                    handle_forward_thrust(
+                        dt,
+                        &mut force,
+                        &mut thrust,
+                        transform,
+                        &mut forward_thrust_event_writer,
+                        true,
+                    );
+                }
+                KeyAction::ThrustNegative => {
+                    handle_forward_thrust(
+                        dt,
+                        &mut force,
+                        &mut thrust,
+                        transform,
+                        &mut forward_thrust_event_writer,
+                        false,
+                    );
+                }
+                KeyAction::ThrustZero => {
+                    handle_forward_stop(
+                        &mut force,
+                        &mut thrust,
+                        transform,
+                        &mut forward_thrust_event_writer,
+                    );
+                }
+                KeyAction::ThrustUp => {
+                    handle_vertical_thrust(
+                        &mut force,
+                        &mut thrust,
+                        transform,
+                        true,
+                        &key_action_event.key_press,
+                    );
+                }
+                KeyAction::ThrustDown => {
+                    handle_vertical_thrust(
+                        &mut force,
+                        &mut thrust,
+                        transform,
+                        false,
+                        &key_action_event.key_press,
+                    );
+                }
+                _ => (),
             };
-
-            thrust.forward_thrust = thrust.forward_thrust_max * coefficient;
         }
+    }
+}
 
-        if key_input.pressed(settings.key_thrust_zero) {
-            thrust.forward_thrust = 0.0;
+fn handle_vertical_thrust(
+    force: &mut ExternalForce,
+    thrust: &mut ThrustComponent,
+    transform: &Transform,
+    is_upward: bool,
+    key_press: &KeyPress,
+) {
+    let current_upward_thrust = thrust.upward_thrust;
+
+    match key_press {
+        KeyPress::Down() => {
+            thrust.upward_thrust += if is_upward {
+                thrust.upward_thrust_max
+            } else {
+                thrust.upward_thrust_max * -1.0
+            }
         }
-
-        if key_input.pressed(settings.key_up) {
-            thrust.upward_thrust = thrust.upward_thrust_max;
+        KeyPress::Release() => {
+            thrust.upward_thrust -= if is_upward {
+                thrust.upward_thrust_max
+            } else {
+                thrust.upward_thrust_max * -1.0
+            }
         }
+        _ => (),
+    }
 
-        if key_input.pressed(settings.key_down) {
-            thrust.upward_thrust = thrust.upward_thrust_max * -1.0;
-        }
+    if thrust.upward_thrust.abs() > thrust.upward_thrust_max {
+        let coefficient = if thrust.upward_thrust > 0.0 {
+            1.0
+        } else {
+            -1.0
+        };
 
-        if key_input.just_released(settings.key_up) || key_input.just_released(settings.key_down) {
-            thrust.upward_thrust = 0.0;
-        }
+        thrust.upward_thrust = thrust.upward_thrust_max * coefficient;
+    }
 
-        if thrust.forward_thrust != current_forward_thrust
-            || thrust.upward_thrust != current_upward_thrust
-        {
-            forward_thrust_event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+    if thrust.upward_thrust != current_upward_thrust {
+        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
+    }
+}
 
-            force.force =
-                get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
-        }
+fn handle_forward_stop(
+    force: &mut ExternalForce,
+    thrust: &mut ThrustComponent,
+    transform: &Transform,
+    event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
+) {
+    let current_forward_thrust = thrust.forward_thrust;
+    thrust.forward_thrust = 0.0;
+
+    if thrust.forward_thrust != current_forward_thrust {
+        event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
+    }
+}
+
+fn handle_forward_thrust(
+    dt: f32,
+    force: &mut ExternalForce,
+    thrust: &mut ThrustComponent,
+    transform: &Transform,
+    event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
+    is_forward: bool,
+) {
+    let current_forward_thrust = thrust.forward_thrust;
+    if is_forward {
+        thrust.forward_thrust += 2000.0 * dt;
+    } else {
+        thrust.forward_thrust -= 2000.0 * dt;
+    }
+
+    if thrust.forward_thrust.abs() > thrust.forward_thrust_max {
+        let coefficient = if thrust.forward_thrust > 0.0 {
+            1.0
+        } else {
+            -1.0
+        };
+
+        thrust.forward_thrust = thrust.forward_thrust_max * coefficient;
+    }
+
+    if thrust.forward_thrust != current_forward_thrust {
+        event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
+        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
 
@@ -143,7 +205,7 @@ fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: 
     forward * forward_thrust + upward * upward_thrust
 }
 
-pub fn control_axis_rotation(
+pub fn update_axis_rotation(
     windows: Query<&Window>,
     mut query: Query<
         (
