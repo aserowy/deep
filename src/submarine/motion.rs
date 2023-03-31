@@ -3,10 +3,10 @@ use std::f32::consts::E;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::ExternalForce;
 
-use super::settings::*;
+use super::{power::PowerCapacitorComponent, settings::*};
 
 #[derive(Clone, Component)]
-pub struct ThrustComponent {
+pub struct EngineComponent {
     pub enabled: bool,
     pub initialized: bool,
     pub forward_thrust: f32,
@@ -19,30 +19,13 @@ pub struct ThrustComponent {
     pub spin_thrust_max: f32,
 }
 
-impl Default for ThrustComponent {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            initialized: false,
-            forward_thrust: 0.0,
-            forward_thrust_max: 2500.0,
-            upward_thrust: 0.0,
-            upward_thrust_max: 1000.0,
-            nose_thrust: 0.0,
-            nose_thrust_max: 500.0,
-            spin_thrust: 0.0,
-            spin_thrust_max: 500.0,
-        }
-    }
-}
-
-pub struct ForwardThrustChangedEvent(pub ThrustComponent);
+pub struct ForwardThrustChangedEvent(pub EngineComponent);
 
 pub fn update_thrust_on_key_action_event(
     time: Res<Time>,
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
-    mut query: Query<(&mut ExternalForce, &Transform, &mut ThrustComponent), With<Camera>>,
+    mut query: Query<(&mut ExternalForce, &Transform, &mut EngineComponent), With<Camera>>,
 ) {
     let dt = time.delta_seconds();
 
@@ -112,7 +95,7 @@ pub fn update_thrust_on_key_action_event(
 
 fn handle_vertical_thrust(
     force: &mut ExternalForce,
-    thrust: &mut ThrustComponent,
+    thrust: &mut EngineComponent,
     transform: &Transform,
     is_upward: bool,
     key_press: &KeyPress,
@@ -154,7 +137,7 @@ fn handle_vertical_thrust(
 
 fn handle_forward_stop(
     force: &mut ExternalForce,
-    thrust: &mut ThrustComponent,
+    thrust: &mut EngineComponent,
     transform: &Transform,
     event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
 ) {
@@ -170,7 +153,7 @@ fn handle_forward_stop(
 fn handle_forward_thrust(
     dt: f32,
     force: &mut ExternalForce,
-    thrust: &mut ThrustComponent,
+    thrust: &mut EngineComponent,
     transform: &Transform,
     event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
     is_forward: bool,
@@ -211,7 +194,7 @@ pub fn update_axis_rotation(
         (
             &mut ExternalForce,
             &mut Transform,
-            &mut ThrustComponent,
+            &mut EngineComponent,
             &SettingsComponent,
         ),
         With<Camera>,
@@ -263,5 +246,37 @@ fn get_torque_coefficient(position: f32, domain: f32, movement_spot: f32) -> f32
         1.0 / (1.0
             + E.powf(5.0 - 10.0 * (relative_abs - blind_spot) / (movement_spot - blind_spot)))
             * coefficient
+    }
+}
+
+pub fn update_power_capacity_component_by_engine(
+    time: Res<Time>,
+    mut query: Query<
+        (
+            &EngineComponent,
+            &mut PowerCapacitorComponent,
+            &mut ExternalForce,
+        ),
+        With<Camera>,
+    >,
+) {
+    let dt = time.delta_seconds();
+
+    if let Ok((engine, mut capacitor, mut force)) = query.get_single_mut() {
+        if !capacitor.enabled || !engine.enabled {
+            return;
+        }
+
+        let consumption = (engine.forward_thrust
+            + engine.upward_thrust
+            + engine.nose_thrust
+            + engine.spin_thrust)
+            * dt;
+
+        if consumption <= capacitor.capacity {
+            capacitor.capacity -= consumption;
+        } else {
+            force.force = Vec3::ZERO;
+        }
     }
 }

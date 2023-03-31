@@ -6,7 +6,12 @@ use bevy_rapier3d::prelude::Velocity;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
-use super::{module::Module, motion::ForwardThrustChangedEvent, PlayerSubmarineResource};
+use super::{
+    module::Module,
+    motion::ForwardThrustChangedEvent,
+    power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
+    PlayerSubmarineResource,
+};
 
 #[derive(Default, Component)]
 pub struct VelocityUiComponent {}
@@ -307,4 +312,20 @@ pub fn update_modules(mut _player: ResMut<PlayerSubmarineResource>) {
         let node = commands.get_entity(node_entity);
         // node.unwrap().clear_children
     } */
+}
+
+pub fn update_power_nodes_on_power_changed_events(
+    mut capacitor_event_reader: EventReader<PowerCapacitorChangedEvent>,
+    mut consumption_event_reader: EventReader<PowerConsumptionChangedEvent>,
+    // mut query: Query<&mut Text, With<ThrustUiComponent>>,
+) {
+    // if let Ok(mut text) = query.get_single_mut() {
+    for event in capacitor_event_reader.iter() {
+        info!("capacitor: {} / {}", event.0.capacity, event.0.capacity_max);
+    }
+
+    for event in consumption_event_reader.iter() {
+        info!("consumption: {}", event.0);
+    }
+    // }
 }

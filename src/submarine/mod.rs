@@ -5,11 +5,12 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use self::{hud::*, module::*, motion::*, settings::*};
+use self::{hud::*, module::*, motion::*, power::*, settings::*};
 
 mod hud;
 mod module;
 mod motion;
+mod power;
 mod settings;
 
 pub struct SubmarinePlugin {}
@@ -25,17 +26,26 @@ impl Plugin for SubmarinePlugin {
         app.init_resource::<PlayerSubmarineResource>()
             .add_event::<ForwardThrustChangedEvent>()
             .add_event::<KeyActionEvent>()
+            .add_event::<PowerCapacitorChangedEvent>()
+            .add_event::<PowerConsumptionChangedEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(setup_hud.on_startup())
             .add_systems(
                 (
                     handle_key_presses,
+                    // power management
+                    update_power_capacity_component_by_core,
+                    // motion
                     update_thrust_on_key_action_event,
-                    update_thrust_node_on_forward_thrust_changed_event,
                     update_axis_rotation,
-                    update_velocity_node,
+                    update_power_capacity_component_by_engine,
+                    // modules
                     trigger_module_action_on_key_action_event,
+                    // ui
                     update_modules,
+                    update_thrust_node_on_forward_thrust_changed_event,
+                    update_velocity_node,
+                    update_power_nodes_on_power_changed_events,
                 )
                     .chain(),
             );
@@ -71,14 +81,13 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                 ..default()
             },
             AtmosphereCamera::default(),
-            // hud & controls
+            // hud & settings
             (
                 VisibilityBundle {
                     visibility: Visibility::Visible,
                     ..default()
                 },
                 SettingsComponent::default(),
-                ThrustComponent::default(),
                 KeyMapComponent {
                     key_actions: vec![
                         KeyActionMap {
@@ -112,6 +121,29 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                     ],
                 },
             ),
+            // power management
+            (
+                PowerCoreComponent { production: 2000.0 },
+                PowerCapacitorComponent {
+                    enabled: true,
+                    initialized: false,
+                    capacity: 10000.0,
+                    capacity_max: 10000.0,
+                },
+            ),
+            // motion
+            EngineComponent {
+                enabled: true,
+                initialized: false,
+                forward_thrust: 0.0,
+                forward_thrust_max: 2500.0,
+                upward_thrust: 0.0,
+                upward_thrust_max: 1000.0,
+                nose_thrust: 0.0,
+                nose_thrust_max: 500.0,
+                spin_thrust: 0.0,
+                spin_thrust_max: 500.0,
+            },
             // physics
             (
                 RigidBody::Dynamic,
@@ -128,6 +160,7 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
         ))
         .id();
 
+    // TODO: replace with component instead of res
     player.enabled = true;
     player.entity = Some(entity);
     player.modules = vec![

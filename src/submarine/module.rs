@@ -10,10 +10,13 @@ pub struct Module {
     pub id: String,
     pub icon: String,
     pub action: ModuleAction,
+    // TODO: replace cooldown and casttime with a system with priorities, energy consumption,
+    // buffer, and energy production (core)
     pub casttime: f32,
     pub current_casttime: Option<f32>,
     pub cooldown: f32,
     pub current_cooldown: Option<f32>,
+    // TODO: add active passive difference: passive draws energy constantly
 }
 
 impl Module {
