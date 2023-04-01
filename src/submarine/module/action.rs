@@ -41,6 +41,7 @@ pub fn handle_module_state_for_actions(
 ) {
     for (mut state, _action) in query.iter_mut() {
         match state.status {
+            ModuleStatus::Passive => (),
             ModuleStatus::Startup => (),
             ModuleStatus::Active => (),
             ModuleStatus::Triggered => (),

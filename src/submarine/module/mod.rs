@@ -25,6 +25,7 @@ pub struct ModuleStateComponent {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ModuleStatus {
+    Passive,
     Startup,
     Active,
     Triggered,

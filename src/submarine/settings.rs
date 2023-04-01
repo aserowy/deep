@@ -7,9 +7,7 @@ pub struct SettingsComponent {
 
 impl Default for SettingsComponent {
     fn default() -> Self {
-        Self {
-            enabled: true,
-        }
+        Self { enabled: true }
     }
 }
 
@@ -100,4 +98,3 @@ fn get_standard_key_press_for_action_event(event: &KeyAction) -> KeyPress {
         KeyAction::ModuleActivation02 => KeyPress::Hold(),
     }
 }
-

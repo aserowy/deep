@@ -38,7 +38,12 @@ fn spawn_youbu_bay(
         GROUND_MULTIPLIER,
     );
 
-    let mesh = generate_mesh_from_base_vectors(mesh_vertices.clone(), mesh_indices.clone(), normals, colors);
+    let mesh = generate_mesh_from_base_vectors(
+        mesh_vertices.clone(),
+        mesh_indices.clone(),
+        normals,
+        colors,
+    );
     let mesh_handle = meshes.add(mesh);
 
     commands

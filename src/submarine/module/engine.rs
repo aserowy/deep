@@ -44,29 +44,13 @@ pub fn trigger_engine_change_on_key_action_event(
 
                 match key_action_event.key_map.key_action {
                     KeyAction::ThrustPositiv => {
-                        handle_forward_thrust(
-                            dt,
-                            &mut force,
-                            &mut engine,
-                            transform,
-                            true,
-                        );
+                        handle_forward_thrust(dt, &mut force, &mut engine, transform, true);
                     }
                     KeyAction::ThrustNegative => {
-                        handle_forward_thrust(
-                            dt,
-                            &mut force,
-                            &mut engine,
-                            transform,
-                            false,
-                        );
+                        handle_forward_thrust(dt, &mut force, &mut engine, transform, false);
                     }
                     KeyAction::ThrustZero => {
-                        handle_forward_stop(
-                            &mut force,
-                            &mut engine,
-                            transform,
-                        );
+                        handle_forward_stop(&mut force, &mut engine, transform);
                     }
                     KeyAction::ThrustUp => {
                         handle_vertical_thrust(
@@ -251,10 +235,10 @@ pub fn set_power_usage_for_engines(
     let dt = time.delta_seconds();
 
     if let Ok((engine, mut usage)) = query.get_single_mut() {
-        let consumption = (engine.forward_thrust
-            + engine.upward_thrust
-            + engine.nose_thrust
-            + engine.spin_thrust)
+        let consumption = (engine.forward_thrust.abs()
+            + engine.upward_thrust.abs()
+            + engine.nose_thrust.abs()
+            + engine.spin_thrust.abs())
             * dt;
 
         usage.usage = consumption;
@@ -267,13 +251,12 @@ pub fn handle_module_state_for_engines(
 ) {
     for (mut force, children) in query.iter_mut() {
         let mut child_iter = child_query.iter_many_mut(children);
-        while let Some((state, mut engine)) = child_iter.fetch_next() {
-            let current_forward_thrust = engine.forward_thrust;
-
+        while let Some((mut state, mut engine)) = child_iter.fetch_next() {
             match state.status {
+                ModuleStatus::Passive => (),
                 ModuleStatus::Startup => set_stop(&mut engine, &mut force),
                 ModuleStatus::Active => (),
-                ModuleStatus::Triggered => (),
+                ModuleStatus::Triggered => state.status = ModuleStatus::Active,
                 ModuleStatus::Shutdown => set_stop(&mut engine, &mut force),
                 ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
             }

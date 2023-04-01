@@ -35,8 +35,11 @@ impl Plugin for SubmarinePlugin {
             .add_system(setup_hud.on_startup().in_base_set(StartupSet::PostStartup))
             .add_systems(
                 (
+                    // handle automatic state transitions
+                    // TODO: startup -> active, shutdown -> inactive
+                    //
+                    // handle key presses
                     handle_key_presses,
-                    // handle key presses & set states
                     trigger_engine_change_on_key_action_event,
                     trigger_module_action_on_key_action_event,
                     update_axis_rotation,
