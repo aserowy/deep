@@ -6,6 +6,8 @@ use super::{
     PlayerSubmarineResource,
 };
 
+pub mod engine;
+
 #[derive(Bundle)]
 pub struct ModuleBundle {
     pub details: ModuleDetailsComponent,

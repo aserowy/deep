@@ -3,11 +3,12 @@ use std::f32::consts::E;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::ExternalForce;
 
-use super::{
-    module::{ModuleStateComponent, ModuleStatus},
+use crate::submarine::{
     power::PowerUsageComponent,
-    settings::*,
+    settings::{KeyAction, KeyActionEvent, KeyPress},
 };
+
+use super::{ModuleStateComponent, ModuleStatus};
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
@@ -270,18 +271,25 @@ pub fn set_power_usage_for_engines(
 }
 
 pub fn handle_module_state_for_engines(
+    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     mut query: Query<(&mut ExternalForce, &Children)>,
     mut child_query: Query<(&mut EngineComponent, &mut ModuleStateComponent)>,
 ) {
     for (mut force, children) in query.iter_mut() {
         let mut child_iter = child_query.iter_many_mut(children);
         while let Some((mut engine, state)) = child_iter.fetch_next() {
+            let current_forward_thrust = engine.forward_thrust;
+
             match state.status {
                 ModuleStatus::Startup => set_stop(&mut engine, &mut force),
                 ModuleStatus::Active => (),
                 ModuleStatus::Triggered => (),
                 ModuleStatus::Shutdown => set_stop(&mut engine, &mut force),
                 ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
+            }
+
+            if current_forward_thrust != engine.forward_thrust {
+                forward_thrust_event_writer.send(ForwardThrustChangedEvent(engine.clone()));
             }
         }
     }

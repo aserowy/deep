@@ -5,11 +5,10 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use self::{hud::*, module::*, motion::*, power::*, settings::*};
+use self::{hud::*, module::{*, engine::*}, power::*, settings::*};
 
 mod hud;
 mod module;
-mod motion;
 mod power;
 mod settings;
 

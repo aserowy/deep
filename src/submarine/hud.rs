@@ -7,8 +7,7 @@ use bevy_rapier3d::prelude::Velocity;
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::{ActionModule, ModuleDetailsComponent},
-    motion::ForwardThrustChangedEvent,
+    module::{ActionModule, ModuleDetailsComponent, engine::ForwardThrustChangedEvent},
     power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
     PlayerSubmarineResource,
 };
