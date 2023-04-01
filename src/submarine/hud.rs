@@ -11,14 +11,17 @@ use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
     module::{engine::EngineComponent, ModuleDetailsComponent},
-    power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
+    power::PowerCapacitorComponent,
 };
 
 #[derive(Default, Component)]
-pub struct VelocityUiComponent {}
+pub struct CapacityUiComponent {}
 
 #[derive(Default, Component)]
 pub struct ThrustUiComponent {}
+
+#[derive(Default, Component)]
+pub struct VelocityUiComponent {}
 
 pub fn setup_hud(
     mut commands: Commands,
@@ -155,7 +158,7 @@ fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
         })
         .with_children(|builder| {
             add_velocity_node(builder, font.clone());
-            add_thrust_node(builder, font);
+            add_thrust_node(builder, font.clone());
         });
 
     builder.spawn(NodeBundle {
@@ -167,14 +170,77 @@ fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
         ..default()
     });
 
-    builder.spawn(NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Column,
-            size: Size::all(Val::Px(100.0)),
+    builder
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                gap: Size::height(Val::Px(5.0)),
+                size: Size::all(Val::Px(100.0)),
+                align_content: AlignContent::FlexEnd,
+                justify_content: JustifyContent::FlexEnd,
+                ..default()
+            },
             ..default()
-        },
-        ..default()
-    });
+        })
+        .with_children(|builder| {
+            add_capacity_node(builder, font);
+        });
+}
+
+fn add_capacity_node(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder.spawn((
+        TextBundle::from_sections([
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "/",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                " kw",
+                TextStyle {
+                    font,
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+        ])
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            ..default()
+        }),
+        CapacityUiComponent::default(),
+    ));
+}
+
+pub fn update_capacity_node_on_capacitor_componend_changed(
+    query: Query<&PowerCapacitorComponent, (With<Camera>, Changed<PowerCapacitorComponent>)>,
+    mut ui_query: Query<&mut Text, With<CapacityUiComponent>>,
+) {
+    if let Ok(capacitor) = query.get_single() {
+        if let Ok(mut text) = ui_query.get_single_mut() {
+            text.sections[0].value = format!("{:.0}", capacitor.capacity);
+            text.sections[2].value = format!("{:.0}", capacitor.capacity_max);
+        }
+    }
 }
 
 fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
@@ -221,7 +287,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
     ));
 }
 
-pub fn update_thrust_node_on_forward_thrust_changed_event(
+pub fn update_thrust_node_on_engine_component_changed(
     camera_query: Query<&Children, With<Camera>>,
     engine_changed_query: Query<&EngineComponent, Changed<EngineComponent>>,
     engine_query: Query<&EngineComponent>,
@@ -322,20 +388,4 @@ pub fn update_modules(
     _query: Query<&Children, With<Camera>>,
     _child_query: Query<&ModuleDetailsComponent>,
 ) {
-}
-
-pub fn update_power_nodes_on_power_changed_events(
-    mut capacitor_event_reader: EventReader<PowerCapacitorChangedEvent>,
-    mut consumption_event_reader: EventReader<PowerConsumptionChangedEvent>,
-    // mut query: Query<&mut Text, With<ThrustUiComponent>>,
-) {
-    // if let Ok(mut text) = query.get_single_mut() {
-    for event in capacitor_event_reader.iter() {
-        info!("capacitor: {} / {}", event.0.capacity, event.0.capacity_max);
-    }
-
-    for event in consumption_event_reader.iter() {
-        info!("consumption: {}", event.0);
-    }
-    // }
 }

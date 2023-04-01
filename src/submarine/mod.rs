@@ -24,8 +24,6 @@ impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
         app //
             .add_event::<KeyActionEvent>()
-            .add_event::<PowerCapacitorChangedEvent>()
-            .add_event::<PowerConsumptionChangedEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(setup_hud.on_startup().in_base_set(StartupSet::PostStartup))
             .add_systems(
@@ -48,9 +46,9 @@ impl Plugin for SubmarinePlugin {
                     handle_module_state_for_actions,
                     // ui
                     update_modules,
-                    update_thrust_node_on_forward_thrust_changed_event,
+                    update_capacity_node_on_capacitor_componend_changed,
+                    update_thrust_node_on_engine_component_changed,
                     update_velocity_node,
-                    update_power_nodes_on_power_changed_events,
                 )
                     .chain(),
             );
