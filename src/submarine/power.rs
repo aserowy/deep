@@ -3,8 +3,6 @@ use bevy::prelude::*;
 #[derive(Clone, Component)]
 pub struct PowerCapacitorComponent {
     // TODO: add unit to names
-    pub enabled: bool,
-    pub initialized: bool,
     pub capacity: f32,
     pub capacity_max: f32,
 }
@@ -12,6 +10,11 @@ pub struct PowerCapacitorComponent {
 #[derive(Component)]
 pub struct PowerCoreComponent {
     pub production: f32,
+}
+
+#[derive(Component, Default)]
+pub struct PowerUsageComponent {
+    pub usage: f32,
 }
 
 pub struct PowerCapacitorChangedEvent(pub PowerCapacitorComponent);
@@ -27,15 +30,6 @@ pub fn update_power_capacity_component_by_core(
     let dt = time.delta_seconds();
 
     if let Ok((mut capacitor, core)) = query.get_single_mut() {
-        if !capacitor.enabled {
-            return;
-        }
-
-        if !capacitor.initialized {
-            capacitor.initialized = true;
-            power_capacitor_event_writer.send(PowerCapacitorChangedEvent(capacitor.clone()));
-        }
-
         let current_capacity = capacitor.capacity;
 
         capacitor.capacity += core.production * dt;

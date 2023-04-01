@@ -1,46 +1,59 @@
 use bevy::prelude::*;
 
-use super::{settings::*, PlayerSubmarineResource};
+use super::{
+    power::{PowerCapacitorComponent, PowerUsageComponent},
+    settings::*,
+    PlayerSubmarineResource,
+};
+
+#[derive(Bundle)]
+pub struct ModuleBundle {
+    pub details: ModuleDetailsComponent,
+    pub state: ModuleStateComponent,
+}
 
 #[derive(Component)]
-pub struct ModuleComponent;
+pub struct ModuleDetailsComponent {
+    pub id: String,
+    pub icon: String,
+    pub slot: u8,
+}
+
+#[derive(Component)]
+pub struct ModuleStateComponent {
+    pub status: ModuleStatus,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ModuleStatus {
+    Startup,
+    Active,
+    Triggered,
+    Shutdown,
+    Inactive,
+}
 
 #[derive(Clone)]
-pub struct Module {
+pub struct ActionModule {
     pub id: String,
     pub icon: String,
     pub action: ModuleAction,
-    // TODO: replace cooldown and casttime with a system with priorities, energy consumption,
-    // buffer, and energy production (core)
-    pub casttime: f32,
-    pub current_casttime: Option<f32>,
-    pub cooldown: f32,
-    pub current_cooldown: Option<f32>,
-    // TODO: add active passive difference: passive draws energy constantly
 }
 
-impl Module {
+impl ActionModule {
     pub fn new_mining_base() -> Self {
-        Module {
+        ActionModule {
             id: "mining_base".into(),
             icon: "󰜐".into(),
             action: ModuleAction::MiningMagnatide,
-            casttime: 4.0,
-            current_casttime: None,
-            cooldown: 4.0,
-            current_cooldown: None,
         }
     }
 
     pub fn new_resource_scanner_base() -> Self {
-        Module {
+        ActionModule {
             id: "resource_scanner_base".into(),
             icon: "󰐷".into(),
             action: ModuleAction::ResourceScan,
-            casttime: 10.0,
-            current_casttime: None,
-            cooldown: 10.0,
-            current_cooldown: None,
         }
     }
 }
@@ -56,11 +69,7 @@ pub fn trigger_module_action_on_key_action_event(
     mut player: ResMut<PlayerSubmarineResource>,
 ) {
     for key_action_event in key_action_event_reader.iter() {
-        if is_module_active(&player.modules) {
-            continue;
-        }
-
-        let mut module: Option<&mut Module> = None;
+        let mut module: Option<&mut ActionModule> = None;
         match &key_action_event.key_map.key_action {
             KeyAction::ModuleActivation01 => {
                 module = get_module_action_by_position(&mut player.modules, 0);
@@ -76,8 +85,26 @@ pub fn trigger_module_action_on_key_action_event(
     }
 }
 
-fn trigger_module_activation(module: &mut Module) {
-    if module.current_cooldown.is_some() {
+pub fn update_power_capacity_component_by_module_power_usage(
+    mut query: Query<(&mut PowerCapacitorComponent, &Children)>,
+    mut child_query: Query<(&mut ModuleStateComponent, &mut PowerUsageComponent)>,
+) {
+    for (mut capacitor, children) in query.iter_mut() {
+        let mut child_iter = child_query.iter_many_mut(children);
+        while let Some((mut state, mut usage)) = child_iter.fetch_next() {
+            if capacitor.capacity < usage.usage {
+                state.status = ModuleStatus::Shutdown;
+            } else {
+                capacitor.capacity -= usage.usage;
+            }
+
+            usage.usage = 0.0;
+        }
+    }
+}
+
+fn trigger_module_activation(_module: &mut ActionModule) {
+    /* if module.current_cooldown.is_some() {
         return;
     }
 
@@ -87,17 +114,16 @@ fn trigger_module_activation(module: &mut Module) {
     info!(
         "Module {} activated with {} cooldown",
         module.id, module.cooldown
-    );
+    ); */
 }
 
-fn get_module_action_by_position(modules: &mut Vec<Module>, index: usize) -> Option<&mut Module> {
+fn get_module_action_by_position(
+    modules: &mut Vec<ActionModule>,
+    index: usize,
+) -> Option<&mut ActionModule> {
     if index < modules.len() {
         Some(&mut modules[index])
     } else {
         None
     }
-}
-
-fn is_module_active(modules: &Vec<Module>) -> bool {
-    modules.iter().any(|mdl| mdl.current_casttime.is_some())
 }

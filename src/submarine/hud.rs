@@ -7,7 +7,7 @@ use bevy_rapier3d::prelude::Velocity;
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::Module,
+    module::{ActionModule, ModuleDetailsComponent},
     motion::ForwardThrustChangedEvent,
     power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
     PlayerSubmarineResource,
@@ -280,7 +280,11 @@ fn add_module_nodes(
     }
 }
 
-fn add_module_to_module_nodes(builder: &mut ChildBuilder, module: &mut Module, font: Handle<Font>) {
+fn add_module_to_module_nodes(
+    builder: &mut ChildBuilder,
+    module: &mut ActionModule,
+    font: Handle<Font>,
+) {
     builder
         .spawn(NodeBundle {
             style: Style {
@@ -307,11 +311,10 @@ fn add_module_to_module_nodes(builder: &mut ChildBuilder, module: &mut Module, f
         });
 }
 
-pub fn update_modules(mut _player: ResMut<PlayerSubmarineResource>) {
-    /* if let Ok(node_entity) = query.get_single() {
-        let node = commands.get_entity(node_entity);
-        // node.unwrap().clear_children
-    } */
+pub fn update_modules(
+    query: Query<&Children, With<Camera>>,
+    child_query: Query<&ModuleDetailsComponent>,
+) {
 }
 
 pub fn update_power_nodes_on_power_changed_events(

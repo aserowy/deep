@@ -3,14 +3,12 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct SettingsComponent {
     pub enabled: bool,
-    pub movement_spot: f32,
 }
 
 impl Default for SettingsComponent {
     fn default() -> Self {
         Self {
             enabled: true,
-            movement_spot: 125.0,
         }
     }
 }

@@ -33,14 +33,17 @@ impl Plugin for SubmarinePlugin {
             .add_systems(
                 (
                     handle_key_presses,
-                    // power management
-                    update_power_capacity_component_by_core,
                     // motion
                     update_thrust_on_key_action_event,
                     update_axis_rotation,
-                    update_power_capacity_component_by_engine,
+                    set_power_usage_for_engines,
                     // modules
                     trigger_module_action_on_key_action_event,
+                    // power management
+                    update_power_capacity_component_by_core,
+                    update_power_capacity_component_by_module_power_usage,
+                    // state
+                    handle_module_state_for_engines,
                     // ui
                     update_modules,
                     update_thrust_node_on_forward_thrust_changed_event,
@@ -56,7 +59,7 @@ impl Plugin for SubmarinePlugin {
 pub struct PlayerSubmarineResource {
     pub enabled: bool,
     pub entity: Option<Entity>,
-    pub modules: Vec<Module>,
+    pub modules: Vec<ActionModule>,
 }
 
 fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubmarineResource>) {
@@ -125,25 +128,10 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
             (
                 PowerCoreComponent { production: 2000.0 },
                 PowerCapacitorComponent {
-                    enabled: true,
-                    initialized: false,
                     capacity: 10000.0,
                     capacity_max: 10000.0,
                 },
             ),
-            // motion
-            EngineComponent {
-                enabled: true,
-                initialized: false,
-                forward_thrust: 0.0,
-                forward_thrust_max: 2500.0,
-                upward_thrust: 0.0,
-                upward_thrust_max: 1000.0,
-                nose_thrust: 0.0,
-                nose_thrust_max: 500.0,
-                spin_thrust: 0.0,
-                spin_thrust_max: 500.0,
-            },
             // physics
             (
                 RigidBody::Dynamic,
@@ -158,13 +146,38 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                 AdditionalMassProperties::Mass(10.0),
             ),
         ))
+        .with_children(|builder| {
+            builder.spawn((
+                ModuleBundle {
+                    details: ModuleDetailsComponent {
+                        id: "engine".into(),
+                        icon: "󰇺".into(),
+                        slot: 1,
+                    },
+                    state: ModuleStateComponent {
+                        status: ModuleStatus::Active,
+                    },
+                },
+                EngineComponent {
+                    forward_thrust: 0.0,
+                    forward_thrust_max: 2500.0,
+                    upward_thrust: 0.0,
+                    upward_thrust_max: 1000.0,
+                    nose_thrust: 0.0,
+                    nose_thrust_max: 500.0,
+                    spin_thrust: 0.0,
+                    spin_thrust_max: 500.0,
+                },
+                PowerUsageComponent::default(),
+            ));
+        })
         .id();
 
     // TODO: replace with component instead of res
     player.enabled = true;
     player.entity = Some(entity);
     player.modules = vec![
-        Module::new_resource_scanner_base(),
-        Module::new_mining_base(),
+        ActionModule::new_resource_scanner_base(),
+        ActionModule::new_mining_base(),
     ];
 }
