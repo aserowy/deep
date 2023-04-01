@@ -24,9 +24,10 @@ pub struct EngineComponent {
     pub spin_thrust_max: f32,
 }
 
+// TODO: rework to queries with changed<>
 pub struct ForwardThrustChangedEvent(pub EngineComponent);
 
-pub fn update_thrust_on_key_action_event(
+pub fn trigger_engine_change_on_key_action_event(
     time: Res<Time>,
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
@@ -273,11 +274,11 @@ pub fn set_power_usage_for_engines(
 pub fn handle_module_state_for_engines(
     mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     mut query: Query<(&mut ExternalForce, &Children)>,
-    mut child_query: Query<(&mut EngineComponent, &mut ModuleStateComponent)>,
+    mut child_query: Query<(&mut ModuleStateComponent, &mut EngineComponent)>,
 ) {
     for (mut force, children) in query.iter_mut() {
         let mut child_iter = child_query.iter_many_mut(children);
-        while let Some((mut engine, state)) = child_iter.fetch_next() {
+        while let Some((state, mut engine)) = child_iter.fetch_next() {
             let current_forward_thrust = engine.forward_thrust;
 
             match state.status {

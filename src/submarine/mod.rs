@@ -7,7 +7,7 @@ use bevy_rapier3d::prelude::*;
 
 use self::{
     hud::*,
-    module::{engine::*, *},
+    module::{action::*, engine::*, *},
     power::*,
     settings::*,
 };
@@ -38,7 +38,7 @@ impl Plugin for SubmarinePlugin {
                 (
                     handle_key_presses,
                     // motion
-                    update_thrust_on_key_action_event,
+                    trigger_engine_change_on_key_action_event,
                     update_axis_rotation,
                     set_power_usage_for_engines,
                     // modules
@@ -48,6 +48,7 @@ impl Plugin for SubmarinePlugin {
                     update_power_capacity_component_by_module_power_usage,
                     // state
                     handle_module_state_for_engines,
+                    handle_module_state_for_actions,
                     // ui
                     update_modules,
                     update_thrust_node_on_forward_thrust_changed_event,
@@ -173,6 +174,39 @@ fn setup_player_submarine(mut commands: Commands) {
                     spin_thrust: 0.0,
                     spin_thrust_max: 500.0,
                 },
+                PowerUsageComponent::default(),
+            ));
+
+            builder.spawn(());
+            builder.spawn((
+                ModuleBundle {
+                    details: ModuleDetailsComponent {
+                        id: "mining_base".into(),
+                        icon: "󰜐".into(),
+                        // action: ModuleAction::MiningMagnatide,
+                        slot: 1,
+                    },
+                    state: ModuleStateComponent {
+                        status: ModuleStatus::Active,
+                    },
+                },
+                ActionComponent {},
+                PowerUsageComponent::default(),
+            ));
+
+            builder.spawn((
+                ModuleBundle {
+                    details: ModuleDetailsComponent {
+                        id: "resource_scanner_base".into(),
+                        icon: "󰐷".into(),
+                        // action: ModuleAction::ResourceScan,
+                        slot: 1,
+                    },
+                    state: ModuleStateComponent {
+                        status: ModuleStatus::Active,
+                    },
+                },
+                ActionComponent {},
                 PowerUsageComponent::default(),
             ));
         });

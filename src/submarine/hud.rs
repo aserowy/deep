@@ -305,8 +305,8 @@ fn add_module_to_module_nodes(
 }
 
 pub fn update_modules(
-    query: Query<&Children, With<Camera>>,
-    child_query: Query<&ModuleDetailsComponent>,
+    _query: Query<&Children, With<Camera>>,
+    _child_query: Query<&ModuleDetailsComponent>,
 ) {
 }
 
