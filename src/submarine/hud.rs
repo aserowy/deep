@@ -10,7 +10,7 @@ use bevy_rapier3d::prelude::Velocity;
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::{engine::ForwardThrustChangedEvent, ModuleDetailsComponent},
+    module::{engine::EngineComponent, ModuleDetailsComponent},
     power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
 };
 
@@ -222,13 +222,22 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
 }
 
 pub fn update_thrust_node_on_forward_thrust_changed_event(
-    mut forward_thrust_event_reader: EventReader<ForwardThrustChangedEvent>,
-    mut query: Query<&mut Text, With<ThrustUiComponent>>,
+    camera_query: Query<&Children, With<Camera>>,
+    engine_query: Query<&EngineComponent, Changed<EngineComponent>>,
+    mut ui_query: Query<&mut Text, With<ThrustUiComponent>>,
 ) {
-    if let Ok(mut text) = query.get_single_mut() {
-        for event in forward_thrust_event_reader.iter() {
-            text.sections[0].value = format!("{:.0}", event.0.forward_thrust);
-            text.sections[2].value = format!("{:.0}", event.0.forward_thrust_max);
+    if let Ok(children) = camera_query.get_single() {
+        let mut thrust = 0.0;
+        let mut thrust_max = 0.0;
+
+        for engine in engine_query.iter_many(children) {
+            thrust += engine.forward_thrust;
+            thrust_max += engine.forward_thrust_max;
+        }
+
+        if let Ok(mut text) = ui_query.get_single_mut() {
+            text.sections[0].value = format!("{:.0}", thrust);
+            text.sections[2].value = format!("{:.0}", thrust_max);
         }
     }
 }

@@ -28,7 +28,6 @@ impl Default for SubmarinePlugin {
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
         app //
-            .add_event::<ForwardThrustChangedEvent>()
             .add_event::<KeyActionEvent>()
             .add_event::<PowerCapacitorChangedEvent>()
             .add_event::<PowerConsumptionChangedEvent>()
@@ -37,16 +36,16 @@ impl Plugin for SubmarinePlugin {
             .add_systems(
                 (
                     handle_key_presses,
-                    // motion
+                    // handle key presses & set states
                     trigger_engine_change_on_key_action_event,
-                    update_axis_rotation,
-                    set_power_usage_for_engines,
-                    // modules
                     trigger_module_action_on_key_action_event,
-                    // power management
+                    update_axis_rotation,
+                    // calculate power usage
+                    set_power_usage_for_engines,
+                    // handle power management
                     update_power_capacity_component_by_core,
                     update_power_capacity_component_by_module_power_usage,
-                    // state
+                    // handle state
                     handle_module_state_for_engines,
                     handle_module_state_for_actions,
                     // ui

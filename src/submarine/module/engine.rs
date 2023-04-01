@@ -24,13 +24,9 @@ pub struct EngineComponent {
     pub spin_thrust_max: f32,
 }
 
-// TODO: rework to queries with changed<>
-pub struct ForwardThrustChangedEvent(pub EngineComponent);
-
 pub fn trigger_engine_change_on_key_action_event(
     time: Res<Time>,
     mut key_action_event_reader: EventReader<KeyActionEvent>,
-    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     mut query: Query<(&mut ExternalForce, &Transform, &Children), With<Camera>>,
     mut child_query: Query<(&ModuleStateComponent, &mut EngineComponent)>,
 ) {
@@ -53,7 +49,6 @@ pub fn trigger_engine_change_on_key_action_event(
                             &mut force,
                             &mut engine,
                             transform,
-                            &mut forward_thrust_event_writer,
                             true,
                         );
                     }
@@ -63,7 +58,6 @@ pub fn trigger_engine_change_on_key_action_event(
                             &mut force,
                             &mut engine,
                             transform,
-                            &mut forward_thrust_event_writer,
                             false,
                         );
                     }
@@ -72,7 +66,6 @@ pub fn trigger_engine_change_on_key_action_event(
                             &mut force,
                             &mut engine,
                             transform,
-                            &mut forward_thrust_event_writer,
                         );
                     }
                     KeyAction::ThrustUp => {
@@ -146,13 +139,11 @@ fn handle_forward_stop(
     force: &mut ExternalForce,
     thrust: &mut EngineComponent,
     transform: &Transform,
-    event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
 ) {
     let current_forward_thrust = thrust.forward_thrust;
     thrust.forward_thrust = 0.0;
 
     if thrust.forward_thrust != current_forward_thrust {
-        event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
         force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
@@ -162,10 +153,10 @@ fn handle_forward_thrust(
     force: &mut ExternalForce,
     thrust: &mut EngineComponent,
     transform: &Transform,
-    event_writer: &mut EventWriter<ForwardThrustChangedEvent>,
     is_forward: bool,
 ) {
     let current_forward_thrust = thrust.forward_thrust;
+
     if is_forward {
         thrust.forward_thrust += 2000.0 * dt;
     } else {
@@ -183,7 +174,6 @@ fn handle_forward_thrust(
     }
 
     if thrust.forward_thrust != current_forward_thrust {
-        event_writer.send(ForwardThrustChangedEvent(thrust.clone()));
         force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
@@ -272,7 +262,6 @@ pub fn set_power_usage_for_engines(
 }
 
 pub fn handle_module_state_for_engines(
-    mut forward_thrust_event_writer: EventWriter<ForwardThrustChangedEvent>,
     mut query: Query<(&mut ExternalForce, &Children)>,
     mut child_query: Query<(&mut ModuleStateComponent, &mut EngineComponent)>,
 ) {
@@ -287,10 +276,6 @@ pub fn handle_module_state_for_engines(
                 ModuleStatus::Triggered => (),
                 ModuleStatus::Shutdown => set_stop(&mut engine, &mut force),
                 ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
-            }
-
-            if current_forward_thrust != engine.forward_thrust {
-                forward_thrust_event_writer.send(ForwardThrustChangedEvent(engine.clone()));
             }
         }
     }
