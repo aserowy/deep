@@ -17,13 +17,8 @@ mod module;
 mod power;
 mod settings;
 
+#[derive(Default)]
 pub struct SubmarinePlugin {}
-
-impl Default for SubmarinePlugin {
-    fn default() -> Self {
-        SubmarinePlugin {}
-    }
-}
 
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {

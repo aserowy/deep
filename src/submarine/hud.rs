@@ -34,7 +34,7 @@ pub fn setup_hud(
         commands.entity(entity).with_children(|parent| {
             // hud
             let line_material = line_materials.add(LineMaterial {
-                color: Color::WHITE.into(),
+                color: Color::WHITE,
             });
 
             parent.spawn((
@@ -207,7 +207,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
             TextSection::new(
                 " kwh",
                 TextStyle {
-                    font: font.clone(),
+                    font,
                     font_size: 15.0,
                     color: Color::WHITE,
                 },

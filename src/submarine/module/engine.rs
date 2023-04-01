@@ -115,7 +115,7 @@ fn handle_vertical_thrust(
     }
 
     if thrust.upward_thrust != current_upward_thrust {
-        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
+        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
 
@@ -128,7 +128,7 @@ fn handle_forward_stop(
     thrust.forward_thrust = 0.0;
 
     if thrust.forward_thrust != current_forward_thrust {
-        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
+        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
 
@@ -158,7 +158,7 @@ fn handle_forward_thrust(
     }
 
     if thrust.forward_thrust != current_forward_thrust {
-        force.force = get_current_force(&transform, thrust.forward_thrust, thrust.upward_thrust);
+        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
     }
 }
 

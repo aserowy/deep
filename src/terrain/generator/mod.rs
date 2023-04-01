@@ -6,13 +6,14 @@ use self::rtin::generate_mesh_with_rtin;
 mod rtin;
 mod u32;
 
+pub type MeshVertices = (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>, Vec<[f32; 4]>);
 type HeightMap = ImageBuffer<Luma<u16>, Vec<u16>>;
 
 pub fn generate_mesh(
     height_map_path: &str,
     height_multiplier: f32,
     ground_multiplier: f32,
-) -> (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>, Vec<[f32; 4]>) {
+) -> MeshVertices {
     let height_map = retrieve_heigth_map(height_map_path);
     let (vertices, indices, normals) = generate_mesh_with_rtin(height_map);
 

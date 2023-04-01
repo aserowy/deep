@@ -12,13 +12,8 @@ mod sky;
 const GROUND_MULTIPLIER: f32 = 1.0;
 const HEIGHT_MULTIPLIER: f32 = 64.0;
 
+#[derive(Default)]
 pub struct TerrainPlugin {}
-
-impl Default for TerrainPlugin {
-    fn default() -> Self {
-        TerrainPlugin {}
-    }
-}
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {

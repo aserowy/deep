@@ -48,7 +48,7 @@ impl From<LineStrip> for Mesh {
     fn from(line: LineStrip) -> Self {
         let mut points: Vec<_> = line.points.into_iter().collect();
         if line.close {
-            points.push(points[0].clone());
+            points.push(points[0]);
         }
 
         let mut mesh = Mesh::new(PrimitiveTopology::LineStrip);

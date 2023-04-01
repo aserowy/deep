@@ -43,7 +43,7 @@ fn generate_mesh_data(
             let vertex_errors_index = get_errors_index(grid_size, vertex);
 
             if let Some(vertex_index) = added_vertex_by_errors_index.get(&vertex_errors_index) {
-                triangle_indices[index] = vertex_index.clone() as u32;
+                triangle_indices[index] = *vertex_index as u32;
             } else {
                 let vertex_index = vertices.len();
                 added_vertex_by_errors_index.insert(vertex_errors_index, vertex_index);
@@ -76,8 +76,8 @@ fn calculate_normals(vertices: &[Vec3], indices: &[[u32; 3]]) -> Vec<[f32; 3]> {
         let normal = (b - a).cross(c - a).normalize();
 
         for vertex_index in vertex_indicies {
-            let current_normal = normals[vertex_index.clone() as usize];
-            normals[vertex_index.clone() as usize] = (normal + current_normal).normalize();
+            let current_normal = normals[*vertex_index as usize];
+            normals[*vertex_index as usize] = (normal + current_normal).normalize();
         }
     }
 
@@ -88,14 +88,14 @@ fn get_relevant_triangles(errors: &[f32], grid_size: u32) -> Vec<Triangle> {
     let mut triangles = Vec::<Triangle>::new();
 
     populate_triangle_ids(
-        &errors,
+        errors,
         &mut triangles,
         grid_size,
         generate_bottom_left_triangle(grid_size),
     );
 
     populate_triangle_ids(
-        &errors,
+        errors,
         &mut triangles,
         grid_size,
         generate_top_right_triangle(grid_size),

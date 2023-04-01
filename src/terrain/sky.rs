@@ -10,13 +10,8 @@ use bevy_atmosphere::{
     system_param::AtmosphereMut,
 };
 
+#[derive(Default)]
 pub struct SkyPlugin {}
-
-impl Default for SkyPlugin {
-    fn default() -> Self {
-        SkyPlugin {}
-    }
-}
 
 impl Plugin for SkyPlugin {
     fn build(&self, app: &mut App) {
@@ -65,7 +60,7 @@ fn daylight_cycle(
 
     if timer.0.finished() {
         // TODO: / 20.0 manipulates the duration: refactor into Duration of one day/night cycle
-        let t = time.elapsed_seconds_wrapped() as f32 / 20.0;
+        let t = time.elapsed_seconds_wrapped() / 20.0;
         atmosphere.sun_position = Vec3::new(0., t.sin(), t.cos());
 
         if let Some((mut light_trans, mut directional)) = query.single_mut().into() {

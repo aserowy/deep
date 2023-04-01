@@ -4,13 +4,8 @@ use self::line::LineMaterial;
 
 pub mod line;
 
+#[derive(Default)]
 pub struct CustomRenderPlugin {}
-
-impl Default for CustomRenderPlugin {
-    fn default() -> Self {
-        CustomRenderPlugin {}
-    }
-}
 
 impl Plugin for CustomRenderPlugin {
     fn build(&self, app: &mut App) {
