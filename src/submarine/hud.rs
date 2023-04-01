@@ -223,19 +223,24 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
 
 pub fn update_thrust_node_on_forward_thrust_changed_event(
     camera_query: Query<&Children, With<Camera>>,
-    engine_query: Query<&EngineComponent, Changed<EngineComponent>>,
+    engine_changed_query: Query<&EngineComponent, Changed<EngineComponent>>,
+    engine_query: Query<&EngineComponent>,
     mut ui_query: Query<&mut Text, With<ThrustUiComponent>>,
 ) {
     if let Ok(children) = camera_query.get_single() {
+        if None == engine_changed_query.iter_many(children).next() {
+            return;
+        }
+
         let mut thrust = 0.0;
         let mut thrust_max = 0.0;
 
-        for engine in engine_query.iter_many(children) {
-            thrust += engine.forward_thrust;
-            thrust_max += engine.forward_thrust_max;
-        }
-
         if let Ok(mut text) = ui_query.get_single_mut() {
+            for engine in engine_query.iter_many(children) {
+                thrust += engine.forward_thrust;
+                thrust_max += engine.forward_thrust_max;
+            }
+
             text.sections[0].value = format!("{:.0}", thrust);
             text.sections[2].value = format!("{:.0}", thrust_max);
         }

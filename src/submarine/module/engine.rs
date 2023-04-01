@@ -12,7 +12,7 @@ use super::{ModuleStateComponent, ModuleStatus};
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug, PartialEq)]
 pub struct EngineComponent {
     pub forward_thrust: f32,
     pub forward_thrust_max: f32,
