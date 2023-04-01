@@ -3,7 +3,6 @@ use bevy::prelude::*;
 use super::{
     power::{PowerCapacitorComponent, PowerUsageComponent},
     settings::*,
-    PlayerSubmarineResource,
 };
 
 pub mod engine;
@@ -68,9 +67,9 @@ pub enum ModuleAction {
 
 pub fn trigger_module_action_on_key_action_event(
     mut key_action_event_reader: EventReader<KeyActionEvent>,
-    mut player: ResMut<PlayerSubmarineResource>,
+    // mut player: ResMut<PlayerSubmarineResource>,
 ) {
-    for key_action_event in key_action_event_reader.iter() {
+    /* for key_action_event in key_action_event_reader.iter() {
         let mut module: Option<&mut ActionModule> = None;
         match &key_action_event.key_map.key_action {
             KeyAction::ModuleActivation01 => {
@@ -84,7 +83,7 @@ pub fn trigger_module_action_on_key_action_event(
         if let Some(activated_module) = module {
             trigger_module_activation(activated_module);
         }
-    }
+    } */
 }
 
 pub fn update_power_capacity_component_by_module_power_usage(

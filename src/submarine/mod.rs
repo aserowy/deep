@@ -5,7 +5,12 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use self::{hud::*, module::{*, engine::*}, power::*, settings::*};
+use self::{
+    hud::*,
+    module::{engine::*, *},
+    power::*,
+    settings::*,
+};
 
 mod hud;
 mod module;
@@ -22,13 +27,13 @@ impl Default for SubmarinePlugin {
 
 impl Plugin for SubmarinePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PlayerSubmarineResource>()
+        app //
             .add_event::<ForwardThrustChangedEvent>()
             .add_event::<KeyActionEvent>()
             .add_event::<PowerCapacitorChangedEvent>()
             .add_event::<PowerConsumptionChangedEvent>()
             .add_system(setup_player_submarine.on_startup())
-            .add_system(setup_hud.on_startup())
+            .add_system(setup_hud.on_startup().in_base_set(StartupSet::PostStartup))
             .add_systems(
                 (
                     handle_key_presses,
@@ -54,15 +59,16 @@ impl Plugin for SubmarinePlugin {
     }
 }
 
-#[derive(Default, Resource)]
-pub struct PlayerSubmarineResource {
+#[derive(Default, Component)]
+pub struct PlayerSubmarineComponent {
     pub enabled: bool,
     pub entity: Option<Entity>,
-    pub modules: Vec<ActionModule>,
 }
 
-fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubmarineResource>) {
-    let entity = commands
+fn setup_player_submarine(mut commands: Commands) {
+    info!("setup_player_submarine");
+
+    commands
         .spawn((
             Camera3dBundle {
                 camera: Camera {
@@ -169,14 +175,5 @@ fn setup_player_submarine(mut commands: Commands, mut player: ResMut<PlayerSubma
                 },
                 PowerUsageComponent::default(),
             ));
-        })
-        .id();
-
-    // TODO: replace with component instead of res
-    player.enabled = true;
-    player.entity = Some(entity);
-    player.modules = vec![
-        ActionModule::new_resource_scanner_base(),
-        ActionModule::new_mining_base(),
-    ];
+        });
 }

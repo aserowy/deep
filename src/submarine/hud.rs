@@ -1,4 +1,7 @@
+use std::slice::Iter;
+
 use bevy::{
+    ecs::query::QueryManyIter,
     pbr::NotShadowCaster,
     prelude::{shape::Circle, *},
 };
@@ -7,9 +10,8 @@ use bevy_rapier3d::prelude::Velocity;
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::{ActionModule, ModuleDetailsComponent, engine::ForwardThrustChangedEvent},
+    module::{engine::ForwardThrustChangedEvent, ModuleDetailsComponent},
     power::{PowerCapacitorChangedEvent, PowerConsumptionChangedEvent},
-    PlayerSubmarineResource,
 };
 
 #[derive(Default, Component)]
@@ -23,13 +25,12 @@ pub fn setup_hud(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut line_materials: ResMut<Assets<LineMaterial>>,
-    player: ResMut<PlayerSubmarineResource>,
+    query: Query<(Entity, &Children), With<Camera>>,
+    child_query: Query<&ModuleDetailsComponent>,
 ) {
-    if !player.enabled {
-        return;
-    }
+    info!("setup_hud");
 
-    if let Some(entity) = player.entity {
+    if let Ok((entity, children)) = query.get_single() {
         commands.entity(entity).with_children(|parent| {
             // hud
             let line_material = line_materials.add(LineMaterial {
@@ -57,26 +58,27 @@ pub fn setup_hud(
                 NotShadowCaster,
             ));
         });
-    }
 
-    let font = asset_server.load("fonts/monofur.ttf");
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                flex_direction: FlexDirection::Column,
-                size: Size::all(Val::Percent(100.0)),
+        let child_iter = child_query.iter_many(children);
+        let font = asset_server.load("fonts/monofur.ttf");
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    size: Size::all(Val::Percent(100.0)),
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        })
-        .with_children(|builder| {
-            add_main_screen_column_nodes(builder, player, font.clone());
-        });
+            })
+            .with_children(|builder| {
+                add_main_screen_column_nodes(builder, child_iter, font.clone());
+            });
+    }
 }
 
 fn add_main_screen_column_nodes(
     builder: &mut ChildBuilder,
-    player: ResMut<PlayerSubmarineResource>,
+    mut child_iter: QueryManyIter<&ModuleDetailsComponent, (), Iter<Entity>>,
     font: Handle<Font>,
 ) {
     builder.spawn(NodeBundle {
@@ -123,7 +125,9 @@ fn add_main_screen_column_nodes(
             ..default()
         })
         .with_children(|builder| {
-            add_module_nodes(builder, player, font);
+            while let Some(details) = child_iter.fetch_next() {
+                add_module_to_module_nodes(builder, details, font.clone());
+            }
         });
 
     builder.spawn(NodeBundle {
@@ -201,7 +205,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
                 },
             ),
             TextSection::new(
-                " kN",
+                " kwh",
                 TextStyle {
                     font: font.clone(),
                     font_size: 15.0,
@@ -269,19 +273,9 @@ pub fn update_velocity_node(
     }
 }
 
-fn add_module_nodes(
-    builder: &mut ChildBuilder,
-    mut player: ResMut<PlayerSubmarineResource>,
-    font: Handle<Font>,
-) {
-    for module in player.modules.iter_mut() {
-        add_module_to_module_nodes(builder, module, font.clone());
-    }
-}
-
 fn add_module_to_module_nodes(
     builder: &mut ChildBuilder,
-    module: &mut ActionModule,
+    details: &ModuleDetailsComponent,
     font: Handle<Font>,
 ) {
     builder
@@ -296,7 +290,7 @@ fn add_module_to_module_nodes(
         })
         .with_children(|builder| {
             builder.spawn((TextBundle::from_sections([TextSection::new(
-                module.icon.clone(),
+                details.icon.clone(),
                 TextStyle {
                     font: font.clone(),
                     font_size: 42.0,
