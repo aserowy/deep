@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use std::fmt::Display;
 
-use super::power::{PowerCapacitorComponent, PowerUsageComponent};
+use super::{
+    power::{PowerCapacitorComponent, PowerUsageComponent},
+    settings::{KeyAction, KeyActionEvent},
+};
 
 pub mod action;
 pub mod engine;
@@ -16,7 +19,6 @@ pub struct ModuleBundle {
 pub struct ModuleDetailsComponent {
     pub id: String,
     pub icon: String,
-    pub slot: u8,
 }
 
 #[derive(Component)]
@@ -41,13 +43,13 @@ impl ModuleState {
 
     pub fn next(&mut self, future: ModuleStatus) {
         let next = match (&self.status, &future) {
-            (ModuleStatus::Startup, ModuleStatus::Active) => true,
+            (ModuleStatus::Starting, ModuleStatus::Active) => true,
             (ModuleStatus::Active, ModuleStatus::Triggered) => true,
-            (ModuleStatus::Active, ModuleStatus::Shutdown) => true,
+            (ModuleStatus::Active, ModuleStatus::ShuttingDown) => true,
             (ModuleStatus::Triggered, ModuleStatus::Active) => true,
-            (ModuleStatus::Triggered, ModuleStatus::Shutdown) => true,
-            (ModuleStatus::Shutdown, ModuleStatus::Inactive) => true,
-            (ModuleStatus::Inactive, ModuleStatus::Startup) => true,
+            (ModuleStatus::Triggered, ModuleStatus::ShuttingDown) => true,
+            (ModuleStatus::ShuttingDown, ModuleStatus::Inactive) => true,
+            (ModuleStatus::Inactive, ModuleStatus::Starting) => true,
             (_, _) => false,
         };
 
@@ -65,10 +67,10 @@ impl ModuleState {
 #[derive(Debug, PartialEq, Eq)]
 pub enum ModuleStatus {
     Passive,
-    Startup,
+    Starting,
     Active,
     Triggered,
-    Shutdown,
+    ShuttingDown,
     Inactive,
 }
 
@@ -76,14 +78,52 @@ impl Display for ModuleStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             ModuleStatus::Passive => "Passive",
-            ModuleStatus::Startup => "Startup",
+            ModuleStatus::Starting => "Startup",
             ModuleStatus::Active => "Active",
             ModuleStatus::Triggered => "Triggered",
-            ModuleStatus::Shutdown => "Shutdown",
+            ModuleStatus::ShuttingDown => "Shutdown",
             ModuleStatus::Inactive => "Inactive",
         })?;
 
         Ok(())
+    }
+}
+
+pub fn trigger_module_status_triggered_on_key_action_event(
+    mut key_action_event_reader: EventReader<KeyActionEvent>,
+    query: Query<&Children, With<Camera>>,
+    mut child_query: Query<&mut ModuleStateComponent>,
+) {
+    if let Ok(children) = query.get_single() {
+        for key_action_event in key_action_event_reader.iter() {
+            let component_index = match &key_action_event.key_map.key_action {
+                KeyAction::ModuleActivation01 => Some(0),
+                KeyAction::ModuleActivation02 => Some(1),
+                _ => None,
+            };
+
+            if let Some(index) = component_index {
+                let mut current_index = 0;
+                let mut child_iter = child_query.iter_many_mut(children);
+                while let Some(mut state_component) = child_iter.fetch_next() {
+                    if current_index == index {
+                        let next_default = match state_component.state.status() {
+                            ModuleStatus::Passive => ModuleStatus::Passive,
+                            ModuleStatus::Starting => ModuleStatus::Active,
+                            ModuleStatus::Active => ModuleStatus::Triggered,
+                            ModuleStatus::Triggered => ModuleStatus::Active,
+                            ModuleStatus::ShuttingDown => ModuleStatus::Inactive,
+                            ModuleStatus::Inactive => ModuleStatus::Starting,
+                        };
+
+                        state_component.state.next(next_default);
+                        return;
+                    }
+
+                    current_index += 1;
+                }
+            }
+        }
     }
 }
 
@@ -95,7 +135,7 @@ pub fn update_power_capacity_component_by_module_power_usage(
         let mut child_iter = child_query.iter_many_mut(children);
         while let Some((mut state_component, mut usage)) = child_iter.fetch_next() {
             if capacitor.capacity < usage.usage {
-                state_component.state.next(ModuleStatus::Shutdown);
+                state_component.state.next(ModuleStatus::ShuttingDown);
             } else {
                 capacitor.capacity -= usage.usage;
             }

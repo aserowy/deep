@@ -116,11 +116,19 @@ fn add_main_screen_column_nodes(
             add_hud_nodes(builder, font.clone());
         });
 
+    builder.spawn(NodeBundle {
+        style: Style {
+            flex_direction: FlexDirection::Column,
+            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            ..default()
+        },
+        ..default()
+    });
+
     builder
         .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::Center,
                 align_content: AlignContent::Center,
                 size: Size::new(Val::Percent(100.0), Val::Percent(12.5)),
                 ..default()
@@ -132,15 +140,6 @@ fn add_main_screen_column_nodes(
                 add_module_to_module_nodes(builder, details, font.clone());
             }
         });
-
-    builder.spawn(NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Column,
-            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
-            ..default()
-        },
-        ..default()
-    });
 }
 
 fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
@@ -361,7 +360,7 @@ fn add_module_to_module_nodes(
     builder
         .spawn(NodeBundle {
             style: Style {
-                size: Size::all(Val::Px(100.0)),
+                size: Size::all(Val::Px(50.0)),
                 justify_content: JustifyContent::Center,
                 align_content: AlignContent::Center,
                 ..default()
@@ -373,7 +372,7 @@ fn add_module_to_module_nodes(
                 details.icon.clone(),
                 TextStyle {
                     font: font.clone(),
-                    font_size: 42.0,
+                    font_size: 32.0,
                     color: Color::WHITE,
                 },
             )])

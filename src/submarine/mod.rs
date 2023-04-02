@@ -37,7 +37,7 @@ impl Plugin for SubmarinePlugin {
                     // handle user input
                     handle_key_presses,
                     trigger_engine_change_on_key_action_event,
-                    trigger_module_action_on_key_action_event,
+                    trigger_module_status_triggered_on_key_action_event,
                     update_axis_rotation,
                     // calculate power usage
                     set_power_usage_for_engines,
@@ -156,7 +156,6 @@ fn setup_player_submarine(mut commands: Commands) {
                     details: ModuleDetailsComponent {
                         id: "engine".into(),
                         icon: "󰇺".into(),
-                        slot: 1,
                     },
                     state: ModuleStateComponent {
                         state: ModuleState::new(),
@@ -181,7 +180,6 @@ fn setup_player_submarine(mut commands: Commands) {
                         id: "resource_scanner_base".into(),
                         icon: "󰐷".into(),
                         // action: ModuleAction::ResourceScan,
-                        slot: 1,
                     },
                     state: ModuleStateComponent {
                         state: ModuleState::new(),
@@ -197,7 +195,6 @@ fn setup_player_submarine(mut commands: Commands) {
                         id: "mining_base".into(),
                         icon: "󰜐".into(),
                         // action: ModuleAction::MiningMagnatide,
-                        slot: 1,
                     },
                     state: ModuleStateComponent {
                         state: ModuleState::new(),

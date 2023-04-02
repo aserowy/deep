@@ -258,10 +258,10 @@ pub fn handle_module_state_for_engines(
         while let Some((mut state, mut engine)) = child_iter.fetch_next() {
             match state.state.status() {
                 ModuleStatus::Passive => (),
-                ModuleStatus::Startup => set_stop(&mut engine, &mut force),
+                ModuleStatus::Starting => set_stop(&mut engine, &mut force),
                 ModuleStatus::Active => (),
                 ModuleStatus::Triggered => state.state.next(ModuleStatus::Active),
-                ModuleStatus::Shutdown => set_stop(&mut engine, &mut force),
+                ModuleStatus::ShuttingDown => set_stop(&mut engine, &mut force),
                 ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
             }
         }

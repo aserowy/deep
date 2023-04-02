@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::submarine::settings::{KeyAction, KeyActionEvent};
-
 use super::{ModuleStateComponent, ModuleStatus};
 
 /* #[derive(Clone)]
@@ -13,28 +11,6 @@ pub enum Action {
 #[derive(Clone, Component)]
 pub struct ActionComponent {}
 
-pub fn trigger_module_action_on_key_action_event(
-    mut key_action_event_reader: EventReader<KeyActionEvent>,
-    // mut player: ResMut<PlayerSubmarineResource>,
-) {
-    for key_action_event in key_action_event_reader.iter() {
-        // let mut module: Option<&mut ActionModule> = None;
-
-        match &key_action_event.key_map.key_action {
-            KeyAction::ModuleActivation01 => {
-                // module = get_module_action_by_position(&mut player.modules, 0);
-            }
-            KeyAction::ModuleActivation02 => {
-                // module = get_module_action_by_position(&mut player.modules, 1);
-            }
-            _ => (),
-        }
-
-        /* if let Some(activated_module) = module {
-            trigger_module_activation(activated_module);
-        } */
-    }
-}
 
 pub fn handle_module_state_for_actions(
     mut query: Query<(&mut ModuleStateComponent, &mut ActionComponent)>,
@@ -42,10 +18,10 @@ pub fn handle_module_state_for_actions(
     for (mut state, _action) in query.iter_mut() {
         match state.state.status() {
             ModuleStatus::Passive => (),
-            ModuleStatus::Startup => (),
+            ModuleStatus::Starting => (),
             ModuleStatus::Active => (),
             ModuleStatus::Triggered => (),
-            ModuleStatus::Shutdown => (),
+            ModuleStatus::ShuttingDown => (),
             ModuleStatus::Inactive => (),
         }
     }
