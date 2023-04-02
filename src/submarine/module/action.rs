@@ -15,10 +15,10 @@ pub struct ActionComponent {}
 pub fn handle_module_state_for_actions(
     mut query: Query<(&mut ModuleStateComponent, &mut ActionComponent)>,
 ) {
-    for (mut state, _action) in query.iter_mut() {
+    for (state, _action) in query.iter_mut() {
         match state.state.status() {
             ModuleStatus::Passive => (),
-            ModuleStatus::Starting => (),
+            ModuleStatus::StartingUp => (),
             ModuleStatus::Active => (),
             ModuleStatus::Triggered => (),
             ModuleStatus::ShuttingDown => (),

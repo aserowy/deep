@@ -22,6 +22,18 @@ pub struct ModuleDetailsComponent {
 }
 
 #[derive(Component)]
+pub struct ModuleShutdownComponent {
+    pub spindown_time: f32,
+    pub current_spindown_time: Option<f32>,
+}
+
+#[derive(Component)]
+pub struct ModuleStartupComponent {
+    pub spinup_time: f32,
+    pub current_spinup_time: Option<f32>,
+}
+
+#[derive(Component)]
 pub struct ModuleStateComponent {
     pub state: ModuleState,
 }
@@ -43,13 +55,13 @@ impl ModuleState {
 
     pub fn next(&mut self, future: ModuleStatus) {
         let next = match (&self.status, &future) {
-            (ModuleStatus::Starting, ModuleStatus::Active) => true,
+            (ModuleStatus::StartingUp, ModuleStatus::Active) => true,
             (ModuleStatus::Active, ModuleStatus::Triggered) => true,
             (ModuleStatus::Active, ModuleStatus::ShuttingDown) => true,
             (ModuleStatus::Triggered, ModuleStatus::Active) => true,
             (ModuleStatus::Triggered, ModuleStatus::ShuttingDown) => true,
             (ModuleStatus::ShuttingDown, ModuleStatus::Inactive) => true,
-            (ModuleStatus::Inactive, ModuleStatus::Starting) => true,
+            (ModuleStatus::Inactive, ModuleStatus::StartingUp) => true,
             (_, _) => false,
         };
 
@@ -67,7 +79,7 @@ impl ModuleState {
 #[derive(Debug, PartialEq, Eq)]
 pub enum ModuleStatus {
     Passive,
-    Starting,
+    StartingUp,
     Active,
     Triggered,
     ShuttingDown,
@@ -78,14 +90,84 @@ impl Display for ModuleStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             ModuleStatus::Passive => "Passive",
-            ModuleStatus::Starting => "Startup",
+            ModuleStatus::StartingUp => "StartingUp",
             ModuleStatus::Active => "Active",
             ModuleStatus::Triggered => "Triggered",
-            ModuleStatus::ShuttingDown => "Shutdown",
+            ModuleStatus::ShuttingDown => "ShuttingDown",
             ModuleStatus::Inactive => "Inactive",
         })?;
 
         Ok(())
+    }
+}
+
+pub fn update_module_shutdown_state_transition_with_shutdown_component(
+    time: Res<Time>,
+    mut query: Query<(&mut ModuleStateComponent, &mut ModuleShutdownComponent)>,
+) {
+    let dt = time.delta_seconds();
+
+    for (mut state_component, mut spinup_component) in query.iter_mut() {
+        if state_component.state.status() != &ModuleStatus::ShuttingDown {
+            continue;
+        }
+
+        if let Some(spinup_time) = spinup_component.current_spindown_time {
+            let spinup_time = spinup_time - dt;
+            if spinup_time > 0.0 {
+                spinup_component.current_spindown_time = Some(spinup_time);
+            } else {
+                spinup_component.current_spindown_time = None;
+                state_component.state.next(ModuleStatus::Inactive);
+            }
+        } else {
+            spinup_component.current_spindown_time = Some(spinup_component.spindown_time);
+        }
+    }
+}
+
+pub fn update_module_shutdown_state_transition(
+    mut query: Query<&mut ModuleStateComponent, Without<ModuleShutdownComponent>>,
+) {
+    for mut state_component in query.iter_mut() {
+        if state_component.state.status() == &ModuleStatus::ShuttingDown {
+            state_component.state.next(ModuleStatus::Inactive);
+        }
+    }
+}
+
+pub fn update_module_startup_state_transition_with_startup_component(
+    time: Res<Time>,
+    mut query: Query<(&mut ModuleStateComponent, &mut ModuleStartupComponent)>,
+) {
+    let dt = time.delta_seconds();
+
+    for (mut state_component, mut spinup_component) in query.iter_mut() {
+        if state_component.state.status() != &ModuleStatus::StartingUp {
+            continue;
+        }
+
+        if let Some(spinup_time) = spinup_component.current_spinup_time {
+            let spinup_time = spinup_time - dt;
+            if spinup_time > 0.0 {
+                spinup_component.current_spinup_time = Some(spinup_time);
+            } else {
+                spinup_component.current_spinup_time = None;
+                state_component.state.next(ModuleStatus::Active);
+            }
+        } else {
+            spinup_component.current_spinup_time = Some(spinup_component.spinup_time);
+        }
+    }
+}
+
+pub fn update_module_startup_state_transition(
+    mut query: Query<&mut ModuleStateComponent, Without<ModuleStartupComponent>>,
+) {
+    for mut state_component in query.iter_mut() {
+        if state_component.state.status() == &ModuleStatus::StartingUp {
+            state_component.state.next(ModuleStatus::Active);
+        }
     }
 }
 
@@ -108,16 +190,16 @@ pub fn trigger_module_status_triggered_on_key_action_event(
                 while let Some(mut state_component) = child_iter.fetch_next() {
                     if current_index == index {
                         let next_default = match state_component.state.status() {
-                            ModuleStatus::Passive => ModuleStatus::Passive,
-                            ModuleStatus::Starting => ModuleStatus::Active,
-                            ModuleStatus::Active => ModuleStatus::Triggered,
-                            ModuleStatus::Triggered => ModuleStatus::Active,
-                            ModuleStatus::ShuttingDown => ModuleStatus::Inactive,
-                            ModuleStatus::Inactive => ModuleStatus::Starting,
+                            ModuleStatus::Active => Some(ModuleStatus::Triggered),
+                            ModuleStatus::Triggered => Some(ModuleStatus::Active),
+                            ModuleStatus::Inactive => Some(ModuleStatus::StartingUp),
+                            _ => None,
                         };
 
-                        state_component.state.next(next_default);
-                        return;
+                        if let Some(state) = next_default {
+                            state_component.state.next(state);
+                            return;
+                        }
                     }
 
                     current_index += 1;

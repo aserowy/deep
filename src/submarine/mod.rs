@@ -26,14 +26,19 @@ impl Plugin for SubmarinePlugin {
             .add_event::<KeyActionEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(setup_hud.on_startup().in_base_set(StartupSet::PostStartup))
+            // handle passive effects
+            // TODO: PassiveComponent
+            //
+            .add_systems((
+                // handle automatic state transitions
+                update_module_startup_state_transition,
+                update_module_startup_state_transition_with_startup_component,
+                update_module_shutdown_state_transition,
+                update_module_shutdown_state_transition_with_shutdown_component,
+            ))
             .add_systems(
+                // TODO: after passive effects & automatic transitions
                 (
-                    // handle automatic state transitions
-                    // TODO: startup -> active, shutdown -> inactive
-                    //
-                    // handle passive effects
-                    // TODO: PassiveComponent
-                    //
                     // handle user input
                     handle_key_presses,
                     trigger_engine_change_on_key_action_event,
@@ -172,6 +177,10 @@ fn setup_player_submarine(mut commands: Commands) {
                     spin_thrust_max: 500.0,
                 },
                 PowerUsageComponent::default(),
+                ModuleStartupComponent {
+                    spinup_time: 5.0,
+                    current_spinup_time: None,
+                },
             ));
 
             builder.spawn((

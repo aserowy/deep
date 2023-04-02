@@ -129,7 +129,7 @@ fn add_main_screen_column_nodes(
         .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::Row,
-                align_content: AlignContent::Center,
+                justify_content: JustifyContent::Center,
                 size: Size::new(Val::Percent(100.0), Val::Percent(12.5)),
                 ..default()
             },
