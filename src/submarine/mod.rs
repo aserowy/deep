@@ -31,7 +31,10 @@ impl Plugin for SubmarinePlugin {
                     // handle automatic state transitions
                     // TODO: startup -> active, shutdown -> inactive
                     //
-                    // handle key presses
+                    // handle passive effects
+                    // TODO: PassiveComponent
+                    //
+                    // handle user input
                     handle_key_presses,
                     trigger_engine_change_on_key_action_event,
                     trigger_module_action_on_key_action_event,
@@ -156,7 +159,7 @@ fn setup_player_submarine(mut commands: Commands) {
                         slot: 1,
                     },
                     state: ModuleStateComponent {
-                        status: ModuleStatus::Active,
+                        state: ModuleState::new(),
                     },
                 },
                 EngineComponent {
@@ -172,23 +175,6 @@ fn setup_player_submarine(mut commands: Commands) {
                 PowerUsageComponent::default(),
             ));
 
-            builder.spawn(());
-            builder.spawn((
-                ModuleBundle {
-                    details: ModuleDetailsComponent {
-                        id: "mining_base".into(),
-                        icon: "󰜐".into(),
-                        // action: ModuleAction::MiningMagnatide,
-                        slot: 1,
-                    },
-                    state: ModuleStateComponent {
-                        status: ModuleStatus::Active,
-                    },
-                },
-                ActionComponent {},
-                PowerUsageComponent::default(),
-            ));
-
             builder.spawn((
                 ModuleBundle {
                     details: ModuleDetailsComponent {
@@ -198,7 +184,23 @@ fn setup_player_submarine(mut commands: Commands) {
                         slot: 1,
                     },
                     state: ModuleStateComponent {
-                        status: ModuleStatus::Active,
+                        state: ModuleState::new(),
+                    },
+                },
+                ActionComponent {},
+                PowerUsageComponent::default(),
+            ));
+
+            builder.spawn((
+                ModuleBundle {
+                    details: ModuleDetailsComponent {
+                        id: "mining_base".into(),
+                        icon: "󰜐".into(),
+                        // action: ModuleAction::MiningMagnatide,
+                        slot: 1,
+                    },
+                    state: ModuleStateComponent {
+                        state: ModuleState::new(),
                     },
                 },
                 ActionComponent {},

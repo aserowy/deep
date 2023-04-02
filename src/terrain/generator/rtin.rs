@@ -181,6 +181,8 @@ fn generate_errors(height_map: &HeightMap, side_length: u32, grid_size: u32) -> 
     errors
 }
 
+// reason = "Precedence is correct and cannot be changed!"
+#[allow(clippy::precedence)]
 fn get_right_child_triangle_index(index: u32) -> u32 {
     let id = index + 2;
     let level = get_level_by_id(id);
@@ -188,6 +190,8 @@ fn get_right_child_triangle_index(index: u32) -> u32 {
     (id + (1 << level + 2) - (1 << (level + 1))) - 2
 }
 
+// reason = "Precedence is correct and cannot be changed!"
+#[allow(clippy::precedence)]
 fn get_left_child_triangle_index(index: u32) -> u32 {
     let id = index + 2;
     let level = get_level_by_id(id);

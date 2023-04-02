@@ -294,7 +294,7 @@ pub fn update_thrust_node_on_engine_component_changed(
     mut ui_query: Query<&mut Text, With<ThrustUiComponent>>,
 ) {
     if let Ok(children) = camera_query.get_single() {
-        if None == engine_changed_query.iter_many(children).next() {
+        if engine_changed_query.iter_many(children).next().is_none() {
             return;
         }
 

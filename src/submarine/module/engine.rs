@@ -38,7 +38,9 @@ pub fn trigger_engine_change_on_key_action_event(
 
             // NOTE: this handles only one engine currently
             if let Some((state, mut engine)) = child_iter.fetch_next() {
-                if state.status != ModuleStatus::Active && state.status != ModuleStatus::Triggered {
+                if state.state.status() != &ModuleStatus::Active
+                    && state.state.status() != &ModuleStatus::Triggered
+                {
                     continue;
                 }
 
@@ -179,7 +181,9 @@ pub fn update_axis_rotation(
 
         // NOTE: this handles only one engine currently
         if let Some((state, mut engine)) = child_iter.fetch_next() {
-            if state.status != ModuleStatus::Active && state.status != ModuleStatus::Triggered {
+            if state.state.status() != &ModuleStatus::Active
+                && state.state.status() != &ModuleStatus::Triggered
+            {
                 return;
             }
 
@@ -252,11 +256,11 @@ pub fn handle_module_state_for_engines(
     for (mut force, children) in query.iter_mut() {
         let mut child_iter = child_query.iter_many_mut(children);
         while let Some((mut state, mut engine)) = child_iter.fetch_next() {
-            match state.status {
+            match state.state.status() {
                 ModuleStatus::Passive => (),
                 ModuleStatus::Startup => set_stop(&mut engine, &mut force),
                 ModuleStatus::Active => (),
-                ModuleStatus::Triggered => state.status = ModuleStatus::Active,
+                ModuleStatus::Triggered => state.state.next(ModuleStatus::Active),
                 ModuleStatus::Shutdown => set_stop(&mut engine, &mut force),
                 ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
             }
