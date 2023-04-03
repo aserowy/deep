@@ -1,21 +1,27 @@
-use std::slice::Iter;
-
 use bevy::{
     ecs::query::QueryManyIter,
     pbr::NotShadowCaster,
     prelude::{shape::Circle, *},
 };
 use bevy_rapier3d::prelude::Velocity;
+use std::slice::Iter;
+use uuid::Uuid;
 
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::{engine::EngineComponent, ModuleDetailsComponent},
+    module::{engine::EngineComponent, *},
     power::PowerCapacitorComponent,
 };
 
 #[derive(Default, Component)]
 pub struct CapacityUiComponent {}
+
+#[derive(Component)]
+pub struct ModuleCooldownUiComponent(Uuid);
+
+#[derive(Component)]
+pub struct ModuleIconUiComponent(Uuid);
 
 #[derive(Default, Component)]
 pub struct ThrustUiComponent {}
@@ -64,6 +70,8 @@ pub fn setup_hud(
 
         let child_iter = child_query.iter_many(children);
         let font = asset_server.load("fonts/monofur.ttf");
+        let font_bold = asset_server.load("fonts/monofur_bold.ttf");
+
         commands
             .spawn(NodeBundle {
                 style: Style {
@@ -74,7 +82,7 @@ pub fn setup_hud(
                 ..default()
             })
             .with_children(|builder| {
-                add_main_screen_column_nodes(builder, child_iter, font.clone());
+                add_main_screen_column_nodes(builder, child_iter, font, font_bold);
             });
     }
 }
@@ -83,6 +91,7 @@ fn add_main_screen_column_nodes(
     builder: &mut ChildBuilder,
     mut child_iter: QueryManyIter<&ModuleDetailsComponent, (), Iter<Entity>>,
     font: Handle<Font>,
+    font_bold: Handle<Font>,
 ) {
     builder.spawn(NodeBundle {
         style: Style {
@@ -137,7 +146,7 @@ fn add_main_screen_column_nodes(
         })
         .with_children(|builder| {
             while let Some(details) = child_iter.fetch_next() {
-                add_module_to_module_nodes(builder, details, font.clone());
+                add_module_to_module_nodes(builder, details, font.clone(), font_bold.clone());
             }
         });
 }
@@ -356,6 +365,7 @@ fn add_module_to_module_nodes(
     builder: &mut ChildBuilder,
     details: &ModuleDetailsComponent,
     font: Handle<Font>,
+    font_bold: Handle<Font>,
 ) {
     builder
         .spawn(NodeBundle {
@@ -368,23 +378,81 @@ fn add_module_to_module_nodes(
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn((TextBundle::from_sections([TextSection::new(
-                details.icon.clone(),
-                TextStyle {
-                    font: font.clone(),
-                    font_size: 32.0,
-                    color: Color::WHITE,
-                },
-            )])
-            .with_style(Style {
-                margin: UiRect::right(Val::Px(8.0)),
-                ..default()
-            }),));
+            builder.spawn((
+                TextBundle::from_sections([TextSection::new(
+                    details.icon.clone(),
+                    TextStyle {
+                        font,
+                        font_size: 32.0,
+                        color: Color::WHITE,
+                    },
+                )])
+                .with_style(Style {
+                    margin: UiRect::right(Val::Px(8.0)),
+                    ..default()
+                }),
+                ModuleIconUiComponent(details.id),
+            ));
+
+            builder.spawn((
+                TextBundle::from_sections([TextSection::new(
+                    "",
+                    TextStyle {
+                        font: font_bold,
+                        font_size: 26.0,
+                        color: Color::BLACK,
+                    },
+                )])
+                .with_style(Style {
+                    position: UiRect::right(Val::Px(16.5)),
+                    ..default()
+                }),
+                ModuleCooldownUiComponent(details.id),
+            ));
         });
 }
 
-pub fn update_modules(
-    _query: Query<&Children, With<Camera>>,
-    _child_query: Query<&ModuleDetailsComponent>,
+const GREEN_ALPHA: Color = Color::Rgba {
+    red: 0.0,
+    green: 1.0,
+    blue: 0.0,
+    alpha: 0.25,
+};
+
+const RED_ALPHA: Color = Color::Rgba {
+    red: 1.0,
+    green: 0.0,
+    blue: 0.0,
+    alpha: 0.25,
+};
+
+const WHITE_ALPHA: Color = Color::Rgba {
+    red: 1.0,
+    green: 1.0,
+    blue: 1.0,
+    alpha: 0.25,
+};
+
+pub fn update_modules_by_module_state(
+    camera_query: Query<&Children, With<Camera>>,
+    child_query: Query<(&ModuleDetailsComponent, &ModuleStateComponent)>,
+    mut icon_query: Query<(&mut Text, &ModuleIconUiComponent)>,
 ) {
+    if let Ok(children) = camera_query.get_single() {
+        let mut child_iter = child_query.iter_many(children);
+        let icons = icon_query.iter_mut();
+
+        for (mut icon, component) in icons {
+            if let Some((_, state)) = child_iter.find(|cmp| cmp.0.id == component.0) {
+                icon.sections[0].style.color = match state.state.status() {
+                    ModuleStatus::StartingUp => GREEN_ALPHA,
+                    ModuleStatus::Active => Color::GREEN,
+                    ModuleStatus::Triggered => Color::WHITE,
+                    ModuleStatus::ShuttingDown => RED_ALPHA,
+                    ModuleStatus::Inactive => Color::RED,
+                    _ => WHITE_ALPHA,
+                }
+            }
+        }
+    }
 }

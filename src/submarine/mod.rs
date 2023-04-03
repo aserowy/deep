@@ -4,6 +4,7 @@ use bevy::{
 };
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
+use uuid::Uuid;
 
 use self::{
     hud::*,
@@ -29,36 +30,40 @@ impl Plugin for SubmarinePlugin {
             // handle passive effects
             // TODO: PassiveComponent
             //
+            .add_systems(
+                (
+                    // handle automatic state transitions
+                    update_module_startup_state_transition,
+                    update_module_startup_state_transition_with_startup_component,
+                    update_module_shutdown_state_transition,
+                    update_module_shutdown_state_transition_with_shutdown_component,
+                )
+                    .in_base_set(CoreSet::PreUpdate),
+            )
             .add_systems((
-                // handle automatic state transitions
-                update_module_startup_state_transition,
-                update_module_startup_state_transition_with_startup_component,
-                update_module_shutdown_state_transition,
-                update_module_shutdown_state_transition_with_shutdown_component,
+                // handle user input
+                handle_key_presses,
+                trigger_engine_change_on_key_action_event,
+                trigger_module_status_triggered_on_key_action_event,
+                update_axis_rotation,
+                // calculate power usage
+                set_power_usage_for_engines,
+                // handle power management
+                update_power_capacity_component_by_core,
+                update_power_capacity_component_by_module_power_usage,
+                // handle state
+                handle_module_state_for_engines,
+                handle_module_state_for_actions,
             ))
             .add_systems(
-                // TODO: after passive effects & automatic transitions
                 (
-                    // handle user input
-                    handle_key_presses,
-                    trigger_engine_change_on_key_action_event,
-                    trigger_module_status_triggered_on_key_action_event,
-                    update_axis_rotation,
-                    // calculate power usage
-                    set_power_usage_for_engines,
-                    // handle power management
-                    update_power_capacity_component_by_core,
-                    update_power_capacity_component_by_module_power_usage,
-                    // handle state
-                    handle_module_state_for_engines,
-                    handle_module_state_for_actions,
                     // ui
-                    update_modules,
+                    update_modules_by_module_state,
                     update_capacity_node_on_capacitor_componend_changed,
                     update_thrust_node_on_engine_component_changed,
                     update_velocity_node,
                 )
-                    .chain(),
+                    .in_base_set(CoreSet::PostUpdate),
             );
     }
 }
@@ -159,7 +164,7 @@ fn setup_player_submarine(mut commands: Commands) {
             builder.spawn((
                 ModuleBundle {
                     details: ModuleDetailsComponent {
-                        id: "engine".into(),
+                        id: Uuid::new_v4(),
                         icon: "󰇺".into(),
                     },
                     state: ModuleStateComponent {
@@ -186,7 +191,7 @@ fn setup_player_submarine(mut commands: Commands) {
             builder.spawn((
                 ModuleBundle {
                     details: ModuleDetailsComponent {
-                        id: "resource_scanner_base".into(),
+                        id: Uuid::new_v4(),
                         icon: "󰐷".into(),
                         // action: ModuleAction::ResourceScan,
                     },
@@ -201,7 +206,7 @@ fn setup_player_submarine(mut commands: Commands) {
             builder.spawn((
                 ModuleBundle {
                     details: ModuleDetailsComponent {
-                        id: "mining_base".into(),
+                        id: Uuid::new_v4(),
                         icon: "󰜐".into(),
                         // action: ModuleAction::MiningMagnatide,
                     },

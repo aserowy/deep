@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use std::fmt::Display;
+use uuid::Uuid;
 
 use super::{
     power::{PowerCapacitorComponent, PowerUsageComponent},
@@ -17,7 +18,7 @@ pub struct ModuleBundle {
 
 #[derive(Component)]
 pub struct ModuleDetailsComponent {
-    pub id: String,
+    pub id: Uuid,
     pub icon: String,
 }
 
