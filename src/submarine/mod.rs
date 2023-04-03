@@ -34,7 +34,7 @@ impl Plugin for SubmarinePlugin {
                 (
                     // handle automatic state transitions
                     update_module_startup_state_transition,
-                    update_module_startup_state_transition_with_startup_component,
+                    // update_module_startup_state_transition_with_startup_component,
                     update_module_shutdown_state_transition,
                     update_module_shutdown_state_transition_with_shutdown_component,
                 )
@@ -49,6 +49,7 @@ impl Plugin for SubmarinePlugin {
                 // calculate power usage
                 set_power_usage_for_engines,
                 // handle power management
+                update_power_capacity_by_module_startup,
                 update_power_capacity_component_by_core,
                 update_power_capacity_component_by_module_power_usage,
                 // handle state
@@ -188,8 +189,9 @@ fn setup_player_submarine(mut commands: Commands) {
                 },
                 PowerUsageComponent::default(),
                 ModuleStartupComponent {
-                    spinup_time: 5.0,
-                    current_spinup_time: None,
+                    power_consumption_max: 25000.0,
+                    power_needed: 16000.0,
+                    current_power_needed: None,
                 },
             ));
 

@@ -445,13 +445,14 @@ pub fn update_modules_by_module_startup(
 
         for (mut text, component) in icons {
             if let Some((_, startup)) = child_iter.find(|cmp| cmp.0.id == component.0) {
-                if let Some(cooldown) = startup.current_spinup_time {
+                // TODO: consumption instead of cooldown
+                /* if let Some(cooldown) = startup.current_spinup_time {
                     text.sections[0].value = format!("{:.0}", cooldown);
                     text.sections[0].style.color = Color::WHITE;
                 } else {
                     text.sections[0].value = "0".to_string();
                     text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
-                }
+                } */
             }
         }
     }
