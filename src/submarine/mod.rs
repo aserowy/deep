@@ -58,8 +58,9 @@ impl Plugin for SubmarinePlugin {
             .add_systems(
                 (
                     // ui
-                    update_modules_by_module_state,
                     update_capacity_node_on_capacitor_componend_changed,
+                    update_modules_by_module_startup,
+                    update_modules_by_module_state,
                     update_thrust_node_on_engine_component_changed,
                     update_velocity_node,
                 )
@@ -134,6 +135,10 @@ fn setup_player_submarine(mut commands: Commands) {
                         KeyActionMap {
                             key_code: KeyCode::Key2,
                             key_action: KeyAction::ModuleActivation02,
+                        },
+                        KeyActionMap {
+                            key_code: KeyCode::Key3,
+                            key_action: KeyAction::ModuleActivation03,
                         },
                     ],
                 },

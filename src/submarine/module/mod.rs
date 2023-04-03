@@ -180,9 +180,14 @@ pub fn trigger_module_status_triggered_on_key_action_event(
     if let Ok(children) = query.get_single() {
         for key_action_event in key_action_event_reader.iter() {
             let component_index = match &key_action_event.key_map.key_action {
+                KeyAction::ThrustPositiv => None,
+                KeyAction::ThrustNegative => None,
+                KeyAction::ThrustZero => None,
+                KeyAction::ThrustUp => None,
+                KeyAction::ThrustDown => None,
                 KeyAction::ModuleActivation01 => Some(0),
                 KeyAction::ModuleActivation02 => Some(1),
-                _ => None,
+                KeyAction::ModuleActivation03 => Some(2),
             };
 
             if let Some(index) = component_index {

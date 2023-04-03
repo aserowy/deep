@@ -44,6 +44,7 @@ pub enum KeyAction {
     ThrustDown,
     ModuleActivation01,
     ModuleActivation02,
+    ModuleActivation03,
 }
 
 pub fn handle_key_presses(
@@ -96,5 +97,6 @@ fn get_standard_key_press_for_action_event(event: &KeyAction) -> KeyPress {
         KeyAction::ThrustDown => KeyPress::Down(),
         KeyAction::ModuleActivation01 => KeyPress::Hold(),
         KeyAction::ModuleActivation02 => KeyPress::Hold(),
+        KeyAction::ModuleActivation03 => KeyPress::Hold(),
     }
 }

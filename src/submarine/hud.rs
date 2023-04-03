@@ -396,11 +396,11 @@ fn add_module_to_module_nodes(
 
             builder.spawn((
                 TextBundle::from_sections([TextSection::new(
-                    "",
+                    "0",
                     TextStyle {
                         font: font_bold,
-                        font_size: 26.0,
-                        color: Color::BLACK,
+                        font_size: 20.0,
+                        color: Color::rgba(1.0, 1.0, 1.0, 0.0),
                     },
                 )])
                 .with_style(Style {
@@ -412,6 +412,7 @@ fn add_module_to_module_nodes(
         });
 }
 
+// TODO: match colors from colors.md
 const GREEN_ALPHA: Color = Color::Rgba {
     red: 0.0,
     green: 1.0,
@@ -432,6 +433,29 @@ const WHITE_ALPHA: Color = Color::Rgba {
     blue: 1.0,
     alpha: 0.25,
 };
+
+pub fn update_modules_by_module_startup(
+    camera_query: Query<&Children, With<Camera>>,
+    child_query: Query<(&ModuleDetailsComponent, &ModuleStartupComponent)>,
+    mut icon_query: Query<(&mut Text, &ModuleCooldownUiComponent)>,
+) {
+    if let Ok(children) = camera_query.get_single() {
+        let mut child_iter = child_query.iter_many(children);
+        let icons = icon_query.iter_mut();
+
+        for (mut text, component) in icons {
+            if let Some((_, startup)) = child_iter.find(|cmp| cmp.0.id == component.0) {
+                if let Some(cooldown) = startup.current_spinup_time {
+                    text.sections[0].value = format!("{:.0}", cooldown);
+                    text.sections[0].style.color = Color::WHITE;
+                } else {
+                    text.sections[0].value = "0".to_string();
+                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
+                }
+            }
+        }
+    }
+}
 
 pub fn update_modules_by_module_state(
     camera_query: Query<&Children, With<Camera>>,
