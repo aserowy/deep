@@ -60,6 +60,7 @@ impl Plugin for SubmarinePlugin {
                 (
                     // ui
                     update_capacity_node_on_capacitor_componend_changed,
+                    update_modules_by_module_shutdown,
                     update_modules_by_module_startup,
                     update_modules_by_module_state,
                     update_thrust_node_on_engine_component_changed,
@@ -192,6 +193,10 @@ fn setup_player_submarine(mut commands: Commands) {
                     power_consumption_max: 25000.0,
                     power_needed: 16000.0,
                     current_power_needed: None,
+                },
+                ModuleShutdownComponent {
+                    spindown_time: 3.0,
+                    current_spindown_time: None,
                 },
             ));
 

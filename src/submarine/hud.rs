@@ -18,6 +18,9 @@ use super::{
 pub struct CapacityUiComponent {}
 
 #[derive(Component)]
+pub struct ModuleConsumptionUiComponent(Uuid);
+
+#[derive(Component)]
 pub struct ModuleCooldownUiComponent(Uuid);
 
 #[derive(Component)]
@@ -96,16 +99,7 @@ fn add_main_screen_column_nodes(
     builder.spawn(NodeBundle {
         style: Style {
             flex_direction: FlexDirection::Column,
-            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
-            ..default()
-        },
-        ..default()
-    });
-
-    builder.spawn(NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Column,
-            size: Size::new(Val::Percent(100.0), Val::Percent(25.0)),
+            size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
             ..default()
         },
         ..default()
@@ -382,13 +376,14 @@ fn add_module_to_module_nodes(
                 TextBundle::from_sections([TextSection::new(
                     details.icon.clone(),
                     TextStyle {
-                        font,
+                        font: font.clone(),
                         font_size: 32.0,
                         color: Color::WHITE,
                     },
                 )])
                 .with_style(Style {
-                    margin: UiRect::right(Val::Px(8.0)),
+                    position_type: PositionType::Absolute,
+                    position: UiRect::left(Val::Px(9.0)),
                     ..default()
                 }),
                 ModuleIconUiComponent(details.id),
@@ -404,10 +399,29 @@ fn add_module_to_module_nodes(
                     },
                 )])
                 .with_style(Style {
-                    position: UiRect::right(Val::Px(16.5)),
+                    position_type: PositionType::Absolute,
+                    position: UiRect::top(Val::Px(6.0)),
                     ..default()
                 }),
                 ModuleCooldownUiComponent(details.id),
+            ));
+
+            builder.spawn((
+                TextBundle::from_sections([TextSection::new(
+                    "0",
+                    TextStyle {
+                        font,
+                        font_size: 15.0,
+                        color: Color::rgba(1.0, 1.0, 1.0, 0.0),
+                        ..default()
+                    },
+                )])
+                .with_style(Style {
+                    position_type: PositionType::Absolute,
+                    position: UiRect::top(Val::Px(34.0)),
+                    ..default()
+                }),
+                ModuleConsumptionUiComponent(details.id),
             ));
         });
 }
@@ -437,6 +451,29 @@ const WHITE_ALPHA: Color = Color::Rgba {
 pub fn update_modules_by_module_startup(
     camera_query: Query<&Children, With<Camera>>,
     child_query: Query<(&ModuleDetailsComponent, &ModuleStartupComponent)>,
+    mut icon_query: Query<(&mut Text, &ModuleConsumptionUiComponent)>,
+) {
+    if let Ok(children) = camera_query.get_single() {
+        let mut child_iter = child_query.iter_many(children);
+        let icons = icon_query.iter_mut();
+
+        for (mut text, component) in icons {
+            if let Some((_, startup)) = child_iter.find(|cmp| cmp.0.id == component.0) {
+                if let Some(power_needed) = startup.current_power_needed {
+                    text.sections[0].value = format!("{:.0}", power_needed);
+                    text.sections[0].style.color = Color::WHITE;
+                } else {
+                    text.sections[0].value = "0".to_string();
+                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
+                }
+            }
+        }
+    }
+}
+
+pub fn update_modules_by_module_shutdown(
+    camera_query: Query<&Children, With<Camera>>,
+    child_query: Query<(&ModuleDetailsComponent, &ModuleShutdownComponent)>,
     mut icon_query: Query<(&mut Text, &ModuleCooldownUiComponent)>,
 ) {
     if let Ok(children) = camera_query.get_single() {
@@ -445,14 +482,13 @@ pub fn update_modules_by_module_startup(
 
         for (mut text, component) in icons {
             if let Some((_, startup)) = child_iter.find(|cmp| cmp.0.id == component.0) {
-                // TODO: consumption instead of cooldown
-                /* if let Some(cooldown) = startup.current_spinup_time {
+                if let Some(cooldown) = startup.current_spindown_time {
                     text.sections[0].value = format!("{:.0}", cooldown);
                     text.sections[0].style.color = Color::WHITE;
                 } else {
                     text.sections[0].value = "0".to_string();
                     text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
-                } */
+                }
             }
         }
     }
