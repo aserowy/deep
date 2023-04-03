@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // debug
         // .add_plugin(RapierDebugRenderPlugin::default())
-        .add_plugin(EditorPlugin)
+        .add_plugin(EditorPlugin::default())
         // game
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(CustomRenderPlugin::default())

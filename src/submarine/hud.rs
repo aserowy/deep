@@ -413,7 +413,6 @@ fn add_module_to_module_nodes(
                         font,
                         font_size: 15.0,
                         color: Color::rgba(1.0, 1.0, 1.0, 0.0),
-                        ..default()
                     },
                 )])
                 .with_style(Style {
