@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::render::line::{LineMaterial, LineStrip};
 
 use super::{
-    module::{engine::EngineComponent, *},
+    module::{engine::EngineComponent, *, shutdown::ModuleShutdownComponent, startup::ModuleStartupComponent},
     power::PowerCapacitorComponent,
 };
 

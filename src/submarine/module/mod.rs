@@ -9,6 +9,8 @@ use super::{
 
 pub mod action;
 pub mod engine;
+pub mod shutdown;
+pub mod startup;
 
 #[derive(Bundle)]
 pub struct ModuleBundle {
@@ -20,19 +22,6 @@ pub struct ModuleBundle {
 pub struct ModuleDetailsComponent {
     pub id: Uuid,
     pub icon: String,
-}
-
-#[derive(Component)]
-pub struct ModuleShutdownComponent {
-    pub spindown_time: f32,
-    pub current_spindown_time: Option<f32>,
-}
-
-#[derive(Component)]
-pub struct ModuleStartupComponent {
-    pub power_consumption_max: f32,
-    pub power_needed: f32,
-    pub current_power_needed: Option<f32>,
 }
 
 #[derive(Component)]
@@ -109,51 +98,6 @@ impl Display for ModuleStatus {
     }
 }
 
-pub fn update_module_shutdown_state_transition_with_shutdown_component(
-    time: Res<Time>,
-    mut query: Query<(&mut ModuleStateComponent, &mut ModuleShutdownComponent)>,
-) {
-    let dt = time.delta_seconds();
-
-    for (mut state_component, mut spinup_component) in query.iter_mut() {
-        if state_component.state.status() != &ModuleStatus::ShuttingDown {
-            continue;
-        }
-
-        if let Some(spinup_time) = spinup_component.current_spindown_time {
-            let spinup_time = spinup_time - dt;
-            if spinup_time > 0.0 {
-                spinup_component.current_spindown_time = Some(spinup_time);
-            } else {
-                spinup_component.current_spindown_time = None;
-                state_component.state.next(ModuleStatus::Inactive);
-            }
-        } else {
-            spinup_component.current_spindown_time = Some(spinup_component.spindown_time);
-        }
-    }
-}
-
-pub fn update_module_shutdown_state_transition(
-    mut query: Query<&mut ModuleStateComponent, Without<ModuleShutdownComponent>>,
-) {
-    for mut state_component in query.iter_mut() {
-        if state_component.state.status() == &ModuleStatus::ShuttingDown {
-            state_component.state.next(ModuleStatus::Inactive);
-        }
-    }
-}
-
-pub fn update_module_startup_state_transition(
-    mut query: Query<&mut ModuleStateComponent, Without<ModuleStartupComponent>>,
-) {
-    for mut state_component in query.iter_mut() {
-        if state_component.state.status() == &ModuleStatus::StartingUp {
-            state_component.state.next(ModuleStatus::Active);
-        }
-    }
-}
-
 pub fn trigger_module_status_triggered_on_key_action_event(
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     query: Query<&Children, With<Camera>>,
@@ -191,49 +135,6 @@ pub fn trigger_module_status_triggered_on_key_action_event(
                     }
 
                     current_index += 1;
-                }
-            }
-        }
-    }
-}
-
-pub fn update_power_capacity_by_module_startup(
-    time: Res<Time>,
-    mut query: Query<(&mut PowerCapacitorComponent, &Children)>,
-    mut child_query: Query<(&mut ModuleStateComponent, &mut ModuleStartupComponent)>,
-) {
-    let dt = time.delta_seconds();
-
-    // INFO: maybe flatten consumption over all startups?
-    for (mut capacitor, children) in query.iter_mut() {
-        let mut child_iter = child_query.iter_many_mut(children);
-        while let Some((mut state_component, mut usage)) = child_iter.fetch_next() {
-            if state_component.state.status() != &ModuleStatus::StartingUp {
-                continue;
-            }
-
-            if usage.current_power_needed.is_none() {
-                usage.current_power_needed = Some(usage.power_needed);
-            }
-
-            if let Some(power_needed) = usage.current_power_needed {
-                let consumption_max = usage.power_consumption_max * dt;
-
-                if capacitor.capacity > consumption_max && power_needed > consumption_max {
-                    usage.current_power_needed = Some(power_needed - consumption_max);
-                    capacitor.capacity -= consumption_max;
-                } else if capacitor.capacity < consumption_max && power_needed > capacitor.capacity
-                {
-                    usage.current_power_needed = Some(power_needed - capacitor.capacity);
-                    capacitor.capacity = 0.0;
-                } else {
-                    usage.current_power_needed = Some(0.0);
-                    capacitor.capacity -= power_needed;
-                }
-
-                if power_needed <= 0.1 {
-                    usage.current_power_needed = None;
-                    state_component.state.next(ModuleStatus::Active);
                 }
             }
         }

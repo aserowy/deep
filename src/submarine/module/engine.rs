@@ -8,7 +8,7 @@ use crate::submarine::{
     settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
-use super::*;
+use super::{shutdown::ModuleShutdownComponent, startup::ModuleStartupComponent, *};
 
 const MOVEMENT_SPOT: f32 = 125.0;
 

@@ -6,7 +6,7 @@ use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
 use self::{
-    module::{action, engine},
+    module::{action, engine, startup, shutdown},
     power::*,
     settings::*,
 };
@@ -32,9 +32,9 @@ impl Plugin for SubmarinePlugin {
                 (
                     // handle automatic state transitions
                     action::update_module_channeling_state_transition,
-                    module::update_module_startup_state_transition,
-                    module::update_module_shutdown_state_transition,
-                    module::update_module_shutdown_state_transition_with_shutdown_component,
+                    startup::update_module_startup_state_transition,
+                    shutdown::update_module_shutdown_state_transition,
+                    shutdown::update_module_shutdown_state_transition_with_shutdown_component,
                 )
                     .in_base_set(CoreSet::PreUpdate),
             )
@@ -49,7 +49,7 @@ impl Plugin for SubmarinePlugin {
                 engine::set_power_usage_for_engines,
                 // handle power management
                 power::update_power_capacity_component_by_core,
-                module::update_power_capacity_by_module_startup,
+                startup::update_power_capacity_by_module_startup,
                 module::update_power_capacity_component_by_module_power_usage,
                 // handle state
                 action::handle_module_state_for_channels,
