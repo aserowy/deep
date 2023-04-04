@@ -8,7 +8,7 @@ use crate::submarine::{
     settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
-use super::{ModuleStateComponent, ModuleStatus};
+use super::*;
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
@@ -22,6 +22,46 @@ pub struct EngineComponent {
     pub nose_thrust_max: f32,
     pub spin_thrust: f32,
     pub spin_thrust_max: f32,
+}
+
+pub fn new_thruster_basic() -> (
+    ModuleBundle,
+    EngineComponent,
+    PowerUsageComponent,
+    ModuleStartupComponent,
+    ModuleShutdownComponent,
+) {
+    (
+        ModuleBundle {
+            details: ModuleDetailsComponent {
+                id: Uuid::new_v4(),
+                icon: "󰇺".into(),
+            },
+            state: ModuleStateComponent {
+                state: ModuleState::new(),
+            },
+        },
+        EngineComponent {
+            forward_thrust: 0.0,
+            forward_thrust_max: 2500.0,
+            upward_thrust: 0.0,
+            upward_thrust_max: 1000.0,
+            nose_thrust: 0.0,
+            nose_thrust_max: 500.0,
+            spin_thrust: 0.0,
+            spin_thrust_max: 500.0,
+        },
+        PowerUsageComponent::default(),
+        ModuleStartupComponent {
+            power_consumption_max: 25000.0,
+            power_needed: 16000.0,
+            current_power_needed: None,
+        },
+        ModuleShutdownComponent {
+            spindown_time: 3.0,
+            current_spindown_time: None,
+        },
+    )
 }
 
 pub fn trigger_engine_change_on_key_action_event(
@@ -89,14 +129,14 @@ fn handle_vertical_thrust(
     let current_upward_thrust = thrust.upward_thrust;
 
     match key_press {
-        KeyPress::Down() => {
+        KeyPress::Down => {
             thrust.upward_thrust += if is_upward {
                 thrust.upward_thrust_max
             } else {
                 thrust.upward_thrust_max * -1.0
             }
         }
-        KeyPress::Release() => {
+        KeyPress::Release => {
             thrust.upward_thrust -= if is_upward {
                 thrust.upward_thrust_max
             } else {
@@ -238,7 +278,7 @@ pub fn set_power_usage_for_engines(
 ) {
     let dt = time.delta_seconds();
 
-    if let Ok((engine, mut usage)) = query.get_single_mut() {
+    for (engine, mut usage) in query.iter_mut() {
         let consumption = (engine.forward_thrust.abs()
             + engine.upward_thrust.abs()
             + engine.nose_thrust.abs()

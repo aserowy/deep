@@ -4,11 +4,9 @@ use bevy::{
 };
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
-use uuid::Uuid;
 
 use self::{
-    hud::*,
-    module::{action::*, engine::*, *},
+    module::{action, engine},
     power::*,
     settings::*,
 };
@@ -26,55 +24,50 @@ impl Plugin for SubmarinePlugin {
         app //
             .add_event::<KeyActionEvent>()
             .add_system(setup_player_submarine.on_startup())
-            .add_system(setup_hud.on_startup().in_base_set(StartupSet::PostStartup))
+            .add_system(hud::setup.on_startup().in_base_set(StartupSet::PostStartup))
             // handle passive effects
             // TODO: PassiveComponent
             //
             .add_systems(
                 (
                     // handle automatic state transitions
-                    update_module_startup_state_transition,
-                    // update_module_startup_state_transition_with_startup_component,
-                    update_module_shutdown_state_transition,
-                    update_module_shutdown_state_transition_with_shutdown_component,
+                    action::update_module_channeling_state_transition,
+                    module::update_module_startup_state_transition,
+                    module::update_module_shutdown_state_transition,
+                    module::update_module_shutdown_state_transition_with_shutdown_component,
                 )
                     .in_base_set(CoreSet::PreUpdate),
             )
             .add_systems((
                 // handle user input
                 handle_key_presses,
-                trigger_engine_change_on_key_action_event,
-                trigger_module_status_triggered_on_key_action_event,
-                update_axis_rotation,
+                engine::trigger_engine_change_on_key_action_event,
+                engine::update_axis_rotation,
+                module::trigger_module_status_triggered_on_key_action_event,
                 // calculate power usage
-                set_power_usage_for_engines,
+                action::set_power_usage_for_channels,
+                engine::set_power_usage_for_engines,
                 // handle power management
-                update_power_capacity_by_module_startup,
-                update_power_capacity_component_by_core,
-                update_power_capacity_component_by_module_power_usage,
+                power::update_power_capacity_component_by_core,
+                module::update_power_capacity_by_module_startup,
+                module::update_power_capacity_component_by_module_power_usage,
                 // handle state
-                handle_module_state_for_engines,
-                handle_module_state_for_actions,
+                action::handle_module_state_for_channels,
+                engine::handle_module_state_for_engines,
             ))
             .add_systems(
                 (
                     // ui
-                    update_capacity_node_on_capacitor_componend_changed,
-                    update_modules_by_module_shutdown,
-                    update_modules_by_module_startup,
-                    update_modules_by_module_state,
-                    update_thrust_node_on_engine_component_changed,
-                    update_velocity_node,
+                    hud::update_capacity_node_on_capacitor_componend_changed,
+                    hud::update_modules_by_module_shutdown,
+                    hud::update_modules_by_module_startup,
+                    hud::update_modules_by_module_state,
+                    hud::update_thrust_node_on_engine_component_changed,
+                    hud::update_velocity_node,
                 )
                     .in_base_set(CoreSet::PostUpdate),
             );
     }
-}
-
-#[derive(Default, Component)]
-pub struct PlayerSubmarineComponent {
-    pub enabled: bool,
-    pub entity: Option<Entity>,
 }
 
 fn setup_player_submarine(mut commands: Commands) {
@@ -168,66 +161,7 @@ fn setup_player_submarine(mut commands: Commands) {
             ),
         ))
         .with_children(|builder| {
-            builder.spawn((
-                ModuleBundle {
-                    details: ModuleDetailsComponent {
-                        id: Uuid::new_v4(),
-                        icon: "󰇺".into(),
-                    },
-                    state: ModuleStateComponent {
-                        state: ModuleState::new(),
-                    },
-                },
-                EngineComponent {
-                    forward_thrust: 0.0,
-                    forward_thrust_max: 2500.0,
-                    upward_thrust: 0.0,
-                    upward_thrust_max: 1000.0,
-                    nose_thrust: 0.0,
-                    nose_thrust_max: 500.0,
-                    spin_thrust: 0.0,
-                    spin_thrust_max: 500.0,
-                },
-                PowerUsageComponent::default(),
-                ModuleStartupComponent {
-                    power_consumption_max: 25000.0,
-                    power_needed: 16000.0,
-                    current_power_needed: None,
-                },
-                ModuleShutdownComponent {
-                    spindown_time: 3.0,
-                    current_spindown_time: None,
-                },
-            ));
-
-            builder.spawn((
-                ModuleBundle {
-                    details: ModuleDetailsComponent {
-                        id: Uuid::new_v4(),
-                        icon: "󰐷".into(),
-                        // action: ModuleAction::ResourceScan,
-                    },
-                    state: ModuleStateComponent {
-                        state: ModuleState::new(),
-                    },
-                },
-                ActionComponent {},
-                PowerUsageComponent::default(),
-            ));
-
-            builder.spawn((
-                ModuleBundle {
-                    details: ModuleDetailsComponent {
-                        id: Uuid::new_v4(),
-                        icon: "󰜐".into(),
-                        // action: ModuleAction::MiningMagnatide,
-                    },
-                    state: ModuleStateComponent {
-                        state: ModuleState::new(),
-                    },
-                },
-                ActionComponent {},
-                PowerUsageComponent::default(),
-            ));
+            builder.spawn(engine::new_thruster_basic());
+            builder.spawn(action::new_resource_scanner_basic());
         });
 }

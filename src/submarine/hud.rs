@@ -32,7 +32,7 @@ pub struct ThrustUiComponent {}
 #[derive(Default, Component)]
 pub struct VelocityUiComponent {}
 
-pub fn setup_hud(
+pub fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,

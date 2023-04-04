@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::{
     power::{PowerCapacitorComponent, PowerUsageComponent},
-    settings::{KeyAction, KeyActionEvent},
+    settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
 pub mod action;
@@ -57,6 +57,7 @@ impl ModuleState {
 
     pub fn next(&mut self, future: ModuleStatus) {
         let next = match (&self.status, &future) {
+            (ModuleStatus::Passive, ModuleStatus::Passive) => true,
             (ModuleStatus::StartingUp, ModuleStatus::Active) => true,
             (ModuleStatus::Active, ModuleStatus::Triggered) => true,
             (ModuleStatus::Active, ModuleStatus::ShuttingDown) => true,
@@ -68,12 +69,17 @@ impl ModuleState {
         };
 
         if next {
+            info!(
+                "ModuleState next({}) while in status {} triggered.",
+                future, self.status
+            );
+
             self.status = future;
         } else {
             error!(
-                "ModuleState next(future) with {} while in status {} is invalid!",
+                "ModuleState next({}) while in status {} is invalid!",
                 future, self.status
-            )
+            );
         }
     }
 }
@@ -138,31 +144,6 @@ pub fn update_module_shutdown_state_transition(
     }
 }
 
-/* pub fn update_module_startup_state_transition_with_startup_component(
-    time: Res<Time>,
-    mut query: Query<(&mut ModuleStateComponent, &mut ModuleStartupComponent)>,
-) {
-    let dt = time.delta_seconds();
-
-    for (mut state_component, mut spinup_component) in query.iter_mut() {
-        if state_component.state.status() != &ModuleStatus::StartingUp {
-            continue;
-        }
-
-        if let Some(spinup_time) = spinup_component.current_spinup_time {
-            let spinup_time = spinup_time - dt;
-            if spinup_time > 0.0 {
-                spinup_component.current_spinup_time = Some(spinup_time);
-            } else {
-                spinup_component.current_spinup_time = None;
-                state_component.state.next(ModuleStatus::Active);
-            }
-        } else {
-            spinup_component.current_spinup_time = Some(spinup_component.spinup_time);
-        }
-    }
-} */
-
 pub fn update_module_startup_state_transition(
     mut query: Query<&mut ModuleStateComponent, Without<ModuleStartupComponent>>,
 ) {
@@ -180,15 +161,15 @@ pub fn trigger_module_status_triggered_on_key_action_event(
 ) {
     if let Ok(children) = query.get_single() {
         for key_action_event in key_action_event_reader.iter() {
+            if key_action_event.key_press != KeyPress::Down {
+                continue;
+            }
+
             let component_index = match &key_action_event.key_map.key_action {
-                KeyAction::ThrustPositiv => None,
-                KeyAction::ThrustNegative => None,
-                KeyAction::ThrustZero => None,
-                KeyAction::ThrustUp => None,
-                KeyAction::ThrustDown => None,
                 KeyAction::ModuleActivation01 => Some(0),
                 KeyAction::ModuleActivation02 => Some(1),
                 KeyAction::ModuleActivation03 => Some(2),
+                _ => None,
             };
 
             if let Some(index) = component_index {
@@ -238,13 +219,10 @@ pub fn update_power_capacity_by_module_startup(
             if let Some(power_needed) = usage.current_power_needed {
                 let consumption_max = usage.power_consumption_max * dt;
 
-                if capacitor.capacity > consumption_max
-                    && power_needed > consumption_max
-                {
+                if capacitor.capacity > consumption_max && power_needed > consumption_max {
                     usage.current_power_needed = Some(power_needed - consumption_max);
                     capacitor.capacity -= consumption_max;
-                } else if capacitor.capacity < consumption_max
-                    && power_needed > capacitor.capacity
+                } else if capacitor.capacity < consumption_max && power_needed > capacitor.capacity
                 {
                     usage.current_power_needed = Some(power_needed - capacitor.capacity);
                     capacitor.capacity = 0.0;

@@ -28,11 +28,11 @@ pub struct KeyActionEvent {
     pub key_press: KeyPress,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum KeyPress {
-    Down(),
-    Hold(),
-    Release(),
+    Down,
+    Hold,
+    Release,
 }
 
 #[derive(Clone)]
@@ -57,7 +57,7 @@ pub fn handle_key_presses(
             if key_input.just_released(key_action_map.key_code) {
                 key_action_event_writer.send(KeyActionEvent {
                     key_map: key_action_map.clone(),
-                    key_press: KeyPress::Release(),
+                    key_press: KeyPress::Release,
                 });
 
                 continue;
@@ -66,23 +66,23 @@ pub fn handle_key_presses(
             let key_press = get_standard_key_press_for_action_event(&key_action_map.key_action);
 
             match key_press {
-                KeyPress::Down() => {
+                KeyPress::Down => {
                     if key_input.just_pressed(key_action_map.key_code) {
                         key_action_event_writer.send(KeyActionEvent {
                             key_map: key_action_map.clone(),
-                            key_press: KeyPress::Down(),
+                            key_press: KeyPress::Down,
                         });
                     }
                 }
-                KeyPress::Hold() => {
+                KeyPress::Hold => {
                     if key_input.pressed(key_action_map.key_code) {
                         key_action_event_writer.send(KeyActionEvent {
                             key_map: key_action_map.clone(),
-                            key_press: KeyPress::Hold(),
+                            key_press: KeyPress::Hold,
                         });
                     }
                 }
-                KeyPress::Release() => (),
+                KeyPress::Release => (),
             };
         }
     };
@@ -90,13 +90,13 @@ pub fn handle_key_presses(
 
 fn get_standard_key_press_for_action_event(event: &KeyAction) -> KeyPress {
     match event {
-        KeyAction::ThrustPositiv => KeyPress::Hold(),
-        KeyAction::ThrustNegative => KeyPress::Hold(),
-        KeyAction::ThrustZero => KeyPress::Down(),
-        KeyAction::ThrustUp => KeyPress::Down(),
-        KeyAction::ThrustDown => KeyPress::Down(),
-        KeyAction::ModuleActivation01 => KeyPress::Hold(),
-        KeyAction::ModuleActivation02 => KeyPress::Hold(),
-        KeyAction::ModuleActivation03 => KeyPress::Hold(),
+        KeyAction::ThrustPositiv => KeyPress::Hold,
+        KeyAction::ThrustNegative => KeyPress::Hold,
+        KeyAction::ThrustZero => KeyPress::Down,
+        KeyAction::ThrustUp => KeyPress::Down,
+        KeyAction::ThrustDown => KeyPress::Down,
+        KeyAction::ModuleActivation01 => KeyPress::Down,
+        KeyAction::ModuleActivation02 => KeyPress::Down,
+        KeyAction::ModuleActivation03 => KeyPress::Down,
     }
 }
