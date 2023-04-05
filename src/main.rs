@@ -5,6 +5,7 @@ use render::CustomRenderPlugin;
 use submarine::SubmarinePlugin;
 use terrain::TerrainPlugin;
 
+mod color;
 mod render;
 mod submarine;
 mod terrain;

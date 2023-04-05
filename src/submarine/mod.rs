@@ -6,7 +6,7 @@ use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
 use self::{
-    module::{action, engine, startup, shutdown},
+    module::{action, engine, shutdown, startup},
     power::*,
     settings::*,
 };
@@ -62,6 +62,8 @@ impl Plugin for SubmarinePlugin {
                     hud::update_modules_by_module_shutdown,
                     hud::update_modules_by_module_startup,
                     hud::update_modules_by_module_state,
+                    hud::update_modules_cooldown_by_module_channeling,
+                    hud::update_modules_consumption_by_module_channeling,
                     hud::update_thrust_node_on_engine_component_changed,
                     hud::update_velocity_node,
                 )
@@ -161,7 +163,7 @@ fn setup_player_submarine(mut commands: Commands) {
             ),
         ))
         .with_children(|builder| {
-            builder.spawn(engine::new_thruster_basic());
             builder.spawn(action::new_resource_scanner_basic());
+            builder.spawn(engine::new_thruster_basic());
         });
 }
