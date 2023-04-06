@@ -7,7 +7,10 @@ use bevy_rapier3d::prelude::Velocity;
 use std::slice::Iter;
 use uuid::Uuid;
 
-use crate::{render::line::{LineMaterial, LineStrip}, color::*};
+use crate::{
+    color::*,
+    render::line::{LineMaterial, LineStrip},
+};
 
 use super::{
     module::{
@@ -376,6 +379,7 @@ fn add_module_to_module_nodes(
         })
         .with_children(|builder| {
             builder.spawn((
+                // TODO: icon into const with individual position offsets for center
                 TextBundle::from_sections([TextSection::new(
                     details.icon.clone(),
                     TextStyle {

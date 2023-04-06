@@ -6,7 +6,10 @@ use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
 use self::{
-    module::{action, engine, shutdown, startup},
+    module::{
+        action::{self, ressource_scanner},
+        engine, shutdown, startup,
+    },
     power::*,
     settings::*,
 };
@@ -41,20 +44,27 @@ impl Plugin for SubmarinePlugin {
             .add_systems((
                 // handle user input
                 handle_key_presses,
-                engine::trigger_engine_change_on_key_action_event,
-                engine::update_axis_rotation,
-                module::trigger_module_status_triggered_on_key_action_event,
+                engine::on_key_action_event,
+                engine::on_mouse_position_change,
+                module::on_key_action_event,
                 // calculate power usage
                 action::set_power_usage_for_channels,
                 engine::set_power_usage_for_engines,
                 // handle power management
-                power::update_power_capacity_component_by_core,
+                power::update_capacity_by_core,
                 startup::update_power_capacity_by_module_startup,
-                module::update_power_capacity_component_by_module_power_usage,
+                module::update_power_capacity_by_module_power_usage,
                 // handle state
                 action::handle_module_state_for_channels,
                 engine::handle_module_state_for_engines,
             ))
+            .add_systems(
+                (
+                    // actions
+                    ressource_scanner::activate,
+                )
+                    .in_base_set(CoreSet::PostUpdate),
+            )
             .add_systems(
                 (
                     // ui
@@ -72,7 +82,11 @@ impl Plugin for SubmarinePlugin {
     }
 }
 
-fn setup_player_submarine(mut commands: Commands) {
+fn setup_player_submarine(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     info!("setup_player_submarine");
 
     commands
@@ -163,7 +177,7 @@ fn setup_player_submarine(mut commands: Commands) {
             ),
         ))
         .with_children(|builder| {
-            builder.spawn(action::new_resource_scanner_basic());
+            builder.spawn(ressource_scanner::new_basic(&mut meshes, &mut materials));
             builder.spawn(engine::new_thruster_basic());
         });
 }

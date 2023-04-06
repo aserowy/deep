@@ -64,7 +64,7 @@ pub fn new_thruster_basic() -> (
     )
 }
 
-pub fn trigger_engine_change_on_key_action_event(
+pub fn on_key_action_event(
     time: Res<Time>,
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     mut query: Query<(&mut ExternalForce, &Transform, &Children), With<Camera>>,
@@ -211,7 +211,7 @@ fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: 
     forward * forward_thrust + upward * upward_thrust
 }
 
-pub fn update_axis_rotation(
+pub fn on_mouse_position_change(
     windows: Query<&Window>,
     mut query: Query<(&mut ExternalForce, &mut Transform, &Children), With<Camera>>,
     mut child_query: Query<(&ModuleStateComponent, &mut EngineComponent)>,

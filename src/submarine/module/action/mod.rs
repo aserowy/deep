@@ -1,42 +1,16 @@
-use self::resource_scanner::RessourceScannerComponent;
+use self::ressource_scanner::RessourceScannerComponent;
 
 use super::*;
 
 use crate::submarine::power::PowerUsageComponent;
 
-mod resource_scanner;
+pub mod ressource_scanner;
 
 #[derive(Clone, Component)]
 pub struct ChannelingComponent {
     pub current_duration: Option<f32>,
     pub duration: f32,
     pub power_usage_per_second: f32,
-}
-
-pub fn new_resource_scanner_basic() -> (
-    ModuleBundle,
-    RessourceScannerComponent,
-    ChannelingComponent,
-    PowerUsageComponent,
-) {
-    (
-        ModuleBundle {
-            details: ModuleDetailsComponent {
-                id: Uuid::new_v4(),
-                icon: "󰐷".into(),
-            },
-            state: ModuleStateComponent {
-                state: ModuleState::new(),
-            },
-        },
-        RessourceScannerComponent {},
-        ChannelingComponent {
-            current_duration: None,
-            duration: 8.0,
-            power_usage_per_second: 2500.0,
-        },
-        PowerUsageComponent::default(),
-    )
 }
 
 pub fn update_module_channeling_state_transition(

@@ -21,6 +21,7 @@ pub fn generate_mesh(
     let mut converted_vertices: Vec<Vec3> = Vec::new();
 
     let gradient = colorgrad::CustomGradient::new()
+        // TODO: map colors to color.rs
         .html_colors(&["#7400b8", "#6930c3", "#5e60ce", "#64dfdf"])
         .build()
         .unwrap();

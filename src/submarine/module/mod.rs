@@ -98,7 +98,7 @@ impl Display for ModuleStatus {
     }
 }
 
-pub fn trigger_module_status_triggered_on_key_action_event(
+pub fn on_key_action_event(
     mut key_action_event_reader: EventReader<KeyActionEvent>,
     query: Query<&Children, With<Camera>>,
     mut child_query: Query<&mut ModuleStateComponent>,
@@ -141,7 +141,7 @@ pub fn trigger_module_status_triggered_on_key_action_event(
     }
 }
 
-pub fn update_power_capacity_component_by_module_power_usage(
+pub fn update_power_capacity_by_module_power_usage(
     mut query: Query<(&mut PowerCapacitorComponent, &Children)>,
     mut child_query: Query<(&mut ModuleStateComponent, &mut PowerUsageComponent)>,
 ) {

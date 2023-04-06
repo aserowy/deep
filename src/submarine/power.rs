@@ -17,7 +17,7 @@ pub struct PowerUsageComponent {
     pub usage: f32,
 }
 
-pub fn update_power_capacity_component_by_core(
+pub fn update_capacity_by_core(
     time: Res<Time>,
     mut query: Query<(&mut PowerCapacitorComponent, &PowerCoreComponent)>,
 ) {
