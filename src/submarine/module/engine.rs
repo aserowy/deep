@@ -8,7 +8,7 @@ use crate::submarine::{
     settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
-use super::{shutdown::ModuleShutdownComponent, startup::ModuleStartupComponent, *};
+use super::{shutdown::ModuleShutdownComponent, *};
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
@@ -25,8 +25,9 @@ pub struct EngineComponent {
     pub spin_force_max: f32,
 }
 
-pub fn new_thruster_basic() -> (
+pub fn new_basic() -> (
     ModuleBundle,
+    ModuleMassComponent,
     EngineComponent,
     PowerUsageComponent,
     ModuleShutdownComponent,
@@ -40,6 +41,10 @@ pub fn new_thruster_basic() -> (
             state: ModuleStateComponent {
                 state: ModuleState::new(),
             },
+        },
+        ModuleMassComponent {
+            initialized: false,
+            mass: 1.5 * 1000.0,
         },
         EngineComponent {
             forward_force: 0.0,
@@ -142,11 +147,7 @@ fn handle_vertical_thrust(
     }
 
     if thrust.upward_force.abs() > thrust.upward_force_max {
-        let coefficient = if thrust.upward_force > 0.0 {
-            1.0
-        } else {
-            -1.0
-        };
+        let coefficient = if thrust.upward_force > 0.0 { 1.0 } else { -1.0 };
 
         thrust.upward_force = thrust.upward_force_max * coefficient;
     }

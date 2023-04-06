@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::AdditionalMassProperties;
 use std::fmt::Display;
 use uuid::Uuid;
 
@@ -22,6 +23,12 @@ pub struct ModuleBundle {
 pub struct ModuleDetailsComponent {
     pub id: Uuid,
     pub icon: String,
+}
+
+#[derive(Component)]
+pub struct ModuleMassComponent {
+    pub initialized: bool,
+    pub mass: f32,
 }
 
 #[derive(Component)]
@@ -137,6 +144,30 @@ pub fn on_key_action_event(
                     current_index += 1;
                 }
             }
+        }
+    }
+}
+
+pub fn update_mass_by_module_mass(
+    mut query: Query<(&mut AdditionalMassProperties, &Children)>,
+    mut child_query: Query<&mut ModuleMassComponent>,
+) {
+    for (mut additional_mass, children) in query.iter_mut() {
+        let mut child_iter = child_query.iter_many_mut(children);
+        while let Some(mut mass_component) = child_iter.fetch_next() {
+            if mass_component.initialized {
+                continue;
+            }
+
+            if let AdditionalMassProperties::Mass(mass) = *additional_mass {
+                let mass = mass + mass_component.mass;
+
+                info!("Mass set to {} kg.", mass);
+
+                *additional_mass = AdditionalMassProperties::Mass(mass);
+            }
+
+            mass_component.initialized = true;
         }
     }
 }

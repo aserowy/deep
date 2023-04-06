@@ -33,6 +33,8 @@ impl Plugin for SubmarinePlugin {
             //
             .add_systems(
                 (
+                    // handle ship mass
+                    module::update_mass_by_module_mass,
                     // handle automatic state transitions
                     action::update_module_channeling_state_transition,
                     startup::update_module_startup_state_transition,
@@ -170,16 +172,17 @@ fn setup_player_submarine(
                 ExternalForce::default(),
                 Velocity::default(),
                 Damping {
-                    linear_damping: 2.0,
-                    angular_damping: 2.0,
+                    linear_damping: 1.0,
+                    angular_damping: 1.0,
                 },
                 GravityScale(0.0),
-                Collider::ball(3.0),
-                AdditionalMassProperties::Mass(3.0 * 1000.0), // kg
+                Collider::cuboid(5.0, 2.0, 2.0),
+                ColliderMassProperties::Mass(6.0 * 1000.0), // kg
+                AdditionalMassProperties::Mass(0.0),
             ),
         ))
         .with_children(|builder| {
             builder.spawn(ressource_scanner::new_basic(&mut meshes, &mut materials));
-            builder.spawn(engine::new_thruster_basic());
+            builder.spawn(engine::new_basic());
         });
 }

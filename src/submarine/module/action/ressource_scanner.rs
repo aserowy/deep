@@ -13,12 +13,12 @@ pub struct RessourceScannerComponent {
     pub expanse_max: f32,
 }
 
-// TODO: add mass
 pub fn new_basic(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> (
     ModuleBundle,
+    ModuleMassComponent,
     PbrBundle,
     NotShadowCaster,
     RessourceScannerComponent,
@@ -44,6 +44,10 @@ pub fn new_basic(
             state: ModuleStateComponent {
                 state: ModuleState::new(),
             },
+        },
+        ModuleMassComponent {
+            initialized: false,
+            mass: 2.5 * 1000.0,
         },
         PbrBundle {
             mesh: meshes.add(shape::UVSphere::default().into()),

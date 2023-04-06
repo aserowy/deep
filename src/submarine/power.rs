@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
+// TODO: Power to modules!
+// TODO: Mass to power after module conversion
 #[derive(Clone, Component)]
 pub struct PowerCapacitorComponent {
-    // TODO: add unit to names
     pub watt_hour: f32,
     pub watt_hour_max: f32,
 }
