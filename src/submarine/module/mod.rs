@@ -148,13 +148,14 @@ pub fn update_power_capacity_by_module_power_usage(
     for (mut capacitor, children) in query.iter_mut() {
         let mut child_iter = child_query.iter_many_mut(children);
         while let Some((mut state_component, mut usage)) = child_iter.fetch_next() {
-            if capacitor.capacity < usage.usage {
+            let watt_hour = usage.watt_per_second / 3600.0;
+            if capacitor.watt_hour < watt_hour {
                 state_component.state.next(ModuleStatus::ShuttingDown);
             } else {
-                capacitor.capacity -= usage.usage;
+                capacitor.watt_hour -= watt_hour;
             }
 
-            usage.usage = 0.0;
+            usage.watt_per_second = 0.0;
         }
     }
 }

@@ -4,9 +4,9 @@ use super::*;
 
 #[derive(Component)]
 pub struct ModuleStartupComponent {
-    pub power_consumption_max: f32,
-    pub power_needed: f32,
-    pub current_power_needed: Option<f32>,
+    pub watt_per_second: f32,
+    pub watt: f32,
+    pub current_watt: Option<f32>,
 }
 
 pub fn update_module_startup_state_transition(
@@ -34,27 +34,28 @@ pub fn update_power_capacity_by_module_startup(
                 continue;
             }
 
-            if usage.current_power_needed.is_none() {
-                usage.current_power_needed = Some(usage.power_needed);
+            if usage.current_watt.is_none() {
+                usage.current_watt = Some(usage.watt);
             }
 
-            if let Some(power_needed) = usage.current_power_needed {
-                let consumption_max = usage.power_consumption_max * dt;
+            if let Some(power_needed) = usage.current_watt {
+                let consumption_max = usage.watt_per_second * dt;
+                let capacity_watt_seconds = capacitor.watt_hour * 3600.0;
 
-                if capacitor.capacity > consumption_max && power_needed > consumption_max {
-                    usage.current_power_needed = Some(power_needed - consumption_max);
-                    capacitor.capacity -= consumption_max;
-                } else if capacitor.capacity < consumption_max && power_needed > capacitor.capacity
+                if capacity_watt_seconds > consumption_max && power_needed > consumption_max {
+                    usage.current_watt = Some(power_needed - consumption_max);
+                    capacitor.watt_hour -= consumption_max / 3600.0;
+                } else if capacity_watt_seconds < consumption_max && power_needed > capacitor.watt_hour
                 {
-                    usage.current_power_needed = Some(power_needed - capacitor.capacity);
-                    capacitor.capacity = 0.0;
+                    usage.current_watt = Some(power_needed - capacity_watt_seconds);
+                    capacitor.watt_hour = 0.0;
                 } else {
-                    usage.current_power_needed = Some(0.0);
-                    capacitor.capacity -= power_needed;
+                    usage.current_watt = Some(0.0);
+                    capacitor.watt_hour -= power_needed / 3600.0;
                 }
 
                 if power_needed <= 0.1 {
-                    usage.current_power_needed = None;
+                    usage.current_watt = None;
                     state_component.state.next(ModuleStatus::Active);
                 }
             }

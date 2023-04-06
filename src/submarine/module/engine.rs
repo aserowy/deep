@@ -12,23 +12,23 @@ use super::{shutdown::ModuleShutdownComponent, startup::ModuleStartupComponent, 
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
+// INFO: force in N m/s
 #[derive(Clone, Component, Debug, PartialEq)]
 pub struct EngineComponent {
-    pub forward_thrust: f32,
-    pub forward_thrust_max: f32,
-    pub upward_thrust: f32,
-    pub upward_thrust_max: f32,
-    pub nose_thrust: f32,
-    pub nose_thrust_max: f32,
-    pub spin_thrust: f32,
-    pub spin_thrust_max: f32,
+    pub forward_force: f32,
+    pub forward_force_max: f32,
+    pub upward_force: f32,
+    pub upward_force_max: f32,
+    pub nose_force: f32,
+    pub nose_force_max: f32,
+    pub spin_force: f32,
+    pub spin_force_max: f32,
 }
 
 pub fn new_thruster_basic() -> (
     ModuleBundle,
     EngineComponent,
     PowerUsageComponent,
-    ModuleStartupComponent,
     ModuleShutdownComponent,
 ) {
     (
@@ -42,21 +42,16 @@ pub fn new_thruster_basic() -> (
             },
         },
         EngineComponent {
-            forward_thrust: 0.0,
-            forward_thrust_max: 2500.0,
-            upward_thrust: 0.0,
-            upward_thrust_max: 1000.0,
-            nose_thrust: 0.0,
-            nose_thrust_max: 500.0,
-            spin_thrust: 0.0,
-            spin_thrust_max: 500.0,
+            forward_force: 0.0,
+            forward_force_max: 250.0 * 1000.0,
+            upward_force: 0.0,
+            upward_force_max: 100.0 * 1000.0,
+            nose_force: 0.0,
+            nose_force_max: 50.0 * 1000.0,
+            spin_force: 0.0,
+            spin_force_max: 50.0 * 1000.0,
         },
         PowerUsageComponent::default(),
-        ModuleStartupComponent {
-            power_consumption_max: 25000.0,
-            power_needed: 16000.0,
-            current_power_needed: None,
-        },
         ModuleShutdownComponent {
             spindown_time: 3.0,
             current_spindown_time: None,
@@ -126,38 +121,38 @@ fn handle_vertical_thrust(
     is_upward: bool,
     key_press: &KeyPress,
 ) {
-    let current_upward_thrust = thrust.upward_thrust;
+    let current_upward_thrust = thrust.upward_force;
 
     match key_press {
         KeyPress::Down => {
-            thrust.upward_thrust += if is_upward {
-                thrust.upward_thrust_max
+            thrust.upward_force += if is_upward {
+                thrust.upward_force_max
             } else {
-                thrust.upward_thrust_max * -1.0
+                thrust.upward_force_max * -1.0
             }
         }
         KeyPress::Release => {
-            thrust.upward_thrust -= if is_upward {
-                thrust.upward_thrust_max
+            thrust.upward_force -= if is_upward {
+                thrust.upward_force_max
             } else {
-                thrust.upward_thrust_max * -1.0
+                thrust.upward_force_max * -1.0
             }
         }
         _ => (),
     }
 
-    if thrust.upward_thrust.abs() > thrust.upward_thrust_max {
-        let coefficient = if thrust.upward_thrust > 0.0 {
+    if thrust.upward_force.abs() > thrust.upward_force_max {
+        let coefficient = if thrust.upward_force > 0.0 {
             1.0
         } else {
             -1.0
         };
 
-        thrust.upward_thrust = thrust.upward_thrust_max * coefficient;
+        thrust.upward_force = thrust.upward_force_max * coefficient;
     }
 
-    if thrust.upward_thrust != current_upward_thrust {
-        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
+    if thrust.upward_force != current_upward_thrust {
+        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
     }
 }
 
@@ -166,11 +161,11 @@ fn handle_forward_stop(
     thrust: &mut EngineComponent,
     transform: &Transform,
 ) {
-    let current_forward_thrust = thrust.forward_thrust;
-    thrust.forward_thrust = 0.0;
+    let current_forward_thrust = thrust.forward_force;
+    thrust.forward_force = 0.0;
 
-    if thrust.forward_thrust != current_forward_thrust {
-        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
+    if thrust.forward_force != current_forward_thrust {
+        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
     }
 }
 
@@ -181,26 +176,27 @@ fn handle_forward_thrust(
     transform: &Transform,
     is_forward: bool,
 ) {
-    let current_forward_thrust = thrust.forward_thrust;
+    let current_forward_thrust = thrust.forward_force;
+    let current_step = thrust.forward_force_max * 0.4 * dt;
 
     if is_forward {
-        thrust.forward_thrust += 2000.0 * dt;
+        thrust.forward_force += current_step;
     } else {
-        thrust.forward_thrust -= 2000.0 * dt;
+        thrust.forward_force -= current_step;
     }
 
-    if thrust.forward_thrust.abs() > thrust.forward_thrust_max {
-        let coefficient = if thrust.forward_thrust > 0.0 {
+    if thrust.forward_force.abs() > thrust.forward_force_max {
+        let coefficient = if thrust.forward_force > 0.0 {
             1.0
         } else {
             -1.0
         };
 
-        thrust.forward_thrust = thrust.forward_thrust_max * coefficient;
+        thrust.forward_force = thrust.forward_force_max * coefficient;
     }
 
-    if thrust.forward_thrust != current_forward_thrust {
-        force.force = get_current_force(transform, thrust.forward_thrust, thrust.upward_thrust);
+    if thrust.forward_force != current_forward_thrust {
+        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
     }
 }
 
@@ -231,22 +227,22 @@ pub fn on_mouse_position_change(
 
             if let Some(cursor_position) = window.cursor_position() {
                 force.force =
-                    get_current_force(&transform, engine.forward_thrust, engine.upward_thrust);
+                    get_current_force(&transform, engine.forward_force, engine.upward_force);
 
-                let current_spin_thrust = engine.spin_thrust;
-                let current_nose_thrust = engine.nose_thrust;
+                let current_spin_thrust = engine.spin_force;
+                let current_nose_thrust = engine.nose_force;
 
-                engine.spin_thrust = engine.spin_thrust_max
+                engine.spin_force = engine.spin_force_max
                     * get_torque_coefficient(cursor_position.x, window.width(), MOVEMENT_SPOT);
 
-                engine.nose_thrust = engine.nose_thrust_max
+                engine.nose_force = engine.nose_force_max
                     * get_torque_coefficient(cursor_position.y, window.height(), MOVEMENT_SPOT);
 
-                if engine.spin_thrust != current_spin_thrust
-                    || engine.nose_thrust != current_nose_thrust
+                if engine.spin_force != current_spin_thrust
+                    || engine.nose_force != current_nose_thrust
                 {
-                    force.torque = transform.forward().normalize() * engine.spin_thrust
-                        + transform.left().normalize() * engine.nose_thrust;
+                    force.torque = transform.forward().normalize() * engine.spin_force
+                        + transform.left().normalize() * engine.nose_force;
                 }
             }
         }
@@ -279,13 +275,13 @@ pub fn set_power_usage_for_engines(
     let dt = time.delta_seconds();
 
     for (engine, mut usage) in query.iter_mut() {
-        let consumption = (engine.forward_thrust.abs()
-            + engine.upward_thrust.abs()
-            + engine.nose_thrust.abs()
-            + engine.spin_thrust.abs())
+        let consumption = (engine.forward_force.abs()
+            + engine.upward_force.abs()
+            + engine.nose_force.abs()
+            + engine.spin_force.abs())
             * dt;
 
-        usage.usage = consumption;
+        usage.watt_per_second = consumption; // 1 N m/s == 1 W
     }
 }
 
@@ -309,10 +305,10 @@ pub fn handle_module_state_for_engines(
 }
 
 fn set_stop(engine: &mut Mut<EngineComponent>, force: &mut Mut<ExternalForce>) {
-    engine.forward_thrust = 0.0;
-    engine.upward_thrust = 0.0;
-    engine.nose_thrust = 0.0;
-    engine.spin_thrust = 0.0;
+    engine.forward_force = 0.0;
+    engine.upward_force = 0.0;
+    engine.nose_force = 0.0;
+    engine.spin_force = 0.0;
 
     force.force = Vec3::ZERO;
     force.torque = Vec3::ZERO;

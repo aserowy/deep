@@ -1,5 +1,3 @@
-use self::ressource_scanner::RessourceScannerComponent;
-
 use super::*;
 
 use crate::submarine::power::PowerUsageComponent;
@@ -10,7 +8,7 @@ pub mod ressource_scanner;
 pub struct ChannelingComponent {
     pub current_duration: Option<f32>,
     pub duration: f32,
-    pub power_usage_per_second: f32,
+    pub watt_per_second: f32,
 }
 
 pub fn update_module_channeling_state_transition(
@@ -40,7 +38,7 @@ pub fn set_power_usage_for_channels(
 
     for (channel, mut usage) in query.iter_mut() {
         if channel.current_duration.is_some() {
-            usage.usage = channel.power_usage_per_second * dt;
+            usage.watt_per_second = channel.watt_per_second * dt;
         }
     }
 }

@@ -1,6 +1,9 @@
 use bevy::{pbr::NotShadowCaster, prelude::*};
 
-use crate::{submarine::module::*, color};
+use crate::{
+    color,
+    submarine::module::{startup::ModuleStartupComponent, *},
+};
 
 use super::ChannelingComponent;
 
@@ -10,6 +13,7 @@ pub struct RessourceScannerComponent {
     pub expanse_max: f32,
 }
 
+// TODO: add mass
 pub fn new_basic(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -18,6 +22,7 @@ pub fn new_basic(
     PbrBundle,
     NotShadowCaster,
     RessourceScannerComponent,
+    ModuleStartupComponent,
     ChannelingComponent,
     PowerUsageComponent,
 ) {
@@ -51,10 +56,15 @@ pub fn new_basic(
             material,
             expanse_max: 42.0,
         },
+        ModuleStartupComponent {
+            watt_per_second: 1500.0 * 1000.0,
+            watt: 5000.0 * 1000.0,
+            current_watt: None,
+        },
         ChannelingComponent {
             current_duration: None,
             duration: 8.0,
-            power_usage_per_second: 2500.0,
+            watt_per_second: 450.0 * 1000.0,
         },
         PowerUsageComponent::default(),
     )

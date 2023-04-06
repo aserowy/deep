@@ -156,10 +156,12 @@ fn setup_player_submarine(
             ),
             // power management
             (
-                PowerCoreComponent { production: 2000.0 },
+                PowerCoreComponent {
+                    watt_per_second: 400.0 * 1000.0,
+                },
                 PowerCapacitorComponent {
-                    capacity: 10000.0,
-                    capacity_max: 10000.0,
+                    watt_hour: 1.0 * 1000.0,
+                    watt_hour_max: 1.0 * 1000.0,
                 },
             ),
             // physics
@@ -169,11 +171,11 @@ fn setup_player_submarine(
                 Velocity::default(),
                 Damping {
                     linear_damping: 2.0,
-                    angular_damping: 1.0,
+                    angular_damping: 2.0,
                 },
                 GravityScale(0.0),
                 Collider::ball(3.0),
-                AdditionalMassProperties::Mass(10.0),
+                AdditionalMassProperties::Mass(3.0 * 1000.0), // kg
             ),
         ))
         .with_children(|builder| {

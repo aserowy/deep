@@ -223,7 +223,7 @@ fn add_capacity_node(builder: &mut ChildBuilder, font: Handle<Font>) {
                 },
             ),
             TextSection::new(
-                " kw",
+                " Wh",
                 TextStyle {
                     font,
                     font_size: 15.0,
@@ -245,8 +245,8 @@ pub fn update_capacity_node_on_capacitor_componend_changed(
 ) {
     if let Ok(capacitor) = query.get_single() {
         if let Ok(mut text) = ui_query.get_single_mut() {
-            text.sections[0].value = format!("{:.0}", capacitor.capacity);
-            text.sections[2].value = format!("{:.0}", capacitor.capacity_max);
+            text.sections[0].value = format!("{:.0}", capacitor.watt_hour);
+            text.sections[2].value = format!("{:.0}", capacitor.watt_hour_max);
         }
     }
 }
@@ -279,7 +279,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
                 },
             ),
             TextSection::new(
-                " kwh",
+                " N m/s",
                 TextStyle {
                     font,
                     font_size: 15.0,
@@ -306,17 +306,17 @@ pub fn update_thrust_node_on_engine_component_changed(
             return;
         }
 
-        let mut thrust = 0.0;
-        let mut thrust_max = 0.0;
+        let mut force = 0.0;
+        let mut force_max = 0.0;
 
         if let Ok(mut text) = ui_query.get_single_mut() {
             for engine in engine_query.iter_many(children) {
-                thrust += engine.forward_thrust;
-                thrust_max += engine.forward_thrust_max;
+                force += engine.forward_force;
+                force_max += engine.forward_force_max;
             }
 
-            text.sections[0].value = format!("{:.0}", thrust);
-            text.sections[2].value = format!("{:.0}", thrust_max);
+            text.sections[0].value = format!("{:.0}", force);
+            text.sections[2].value = format!("{:.0}", force_max);
         }
     }
 }
@@ -445,7 +445,7 @@ pub fn update_modules_by_module_startup(
         let mut query_iter = icon_query.iter_mut();
         for (details, startup) in child_iter {
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
-                if let Some(power_needed) = startup.current_power_needed {
+                if let Some(power_needed) = startup.current_watt {
                     text.sections[0].value = format!("{:.0}", power_needed);
                     text.sections[0].style.color = Color::WHITE;
                 } else {
@@ -521,7 +521,7 @@ pub fn update_modules_consumption_by_module_channeling(
         for (details, channeling) in child_iter {
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
                 if channeling.current_duration.is_some() {
-                    text.sections[0].value = format!("-{:.0}", channeling.power_usage_per_second);
+                    text.sections[0].value = format!("-{:.0}", channeling.watt_per_second);
                     text.sections[0].style.color = Color::WHITE;
                 } else {
                     text.sections[0].value = "0".to_string();
