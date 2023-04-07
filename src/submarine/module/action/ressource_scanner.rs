@@ -9,6 +9,8 @@ use crate::{
 
 use super::ChannelingComponent;
 
+const ACTIVE_ALPHA: f32 = 0.25;
+
 #[derive(Clone, Component)]
 pub struct RessourceScannerComponent {
     pub material: Handle<StandardMaterial>,
@@ -93,10 +95,11 @@ pub fn activate(
 ) {
     for (scanner, channel, mut transform) in query.iter_mut() {
         if let Some(span) = channel.current_duration {
-            transform.scale =
-                Vec3::splat(scanner.expanse_max * get_coefficient(span, channel.duration));
+            let scale = scanner.expanse_max * get_coefficient(span, channel.duration);
+            transform.scale = Vec3::splat(scale);
+
             if let Some(material) = materials.get_mut(&scanner.material) {
-                material.base_color.set_a(0.5);
+                material.base_color.set_a(ACTIVE_ALPHA);
             }
         }
     }
@@ -112,39 +115,62 @@ pub fn deactivate_on_aftercast(
     )>,
 ) {
     for (state, scanner, mut aftercast, mut transform) in query.iter_mut() {
-        if state.state.status() != &ModuleStatus::Aftercast
-            && state.state.status() != &ModuleStatus::ShuttingDown
-        {
-            aftercast.current_spindown_time = None;
-            aftercast.spindown_time = None;
-
-            continue;
-        }
-
-        if let (Some(spindown_base), Some(spindown_time), Some(current_spindown_time)) = (
-            aftercast.spindown_base,
-            aftercast.spindown_time,
-            aftercast.current_spindown_time,
-        ) {
-            let current_scale = transform.scale.x;
-
-            if current_scale > 0.01 {
-                let scale = spindown_base * get_coefficient(current_spindown_time, spindown_time);
-                transform.scale = Vec3::splat(scale);
-            } else {
-                transform.scale = Vec3::ZERO;
-                aftercast.current_spindown_time = Some(0.0);
-
-                if let Some(material) = materials.get_mut(&scanner.material) {
-                    material.base_color.set_a(0.0);
-                }
+        match state.state.status() {
+            ModuleStatus::Triggered => continue,
+            ModuleStatus::Aftercast => {
+                cleanup_effect(scanner, &mut materials, &mut aftercast, &mut transform)
             }
-        } else {
-            let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
-            aftercast.current_spindown_time = Some(current);
-            aftercast.spindown_base = Some(transform.scale.x);
-            aftercast.spindown_time = Some(current);
+            ModuleStatus::ShuttingDown => {
+                cleanup_effect(scanner, &mut materials, &mut aftercast, &mut transform)
+            }
+            _ => reset_module(scanner, &mut materials, &mut aftercast, &mut transform),
         }
+    }
+}
+
+fn cleanup_effect(
+    scanner: &RessourceScannerComponent,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    aftercast: &mut ModuleAftercastComponent,
+    transform: &mut Transform,
+) {
+    if let (Some(spindown_base), Some(spindown_time), Some(current_spindown_time)) = (
+        aftercast.spindown_base,
+        aftercast.spindown_time,
+        aftercast.current_spindown_time,
+    ) {
+        let scale = spindown_base * get_coefficient(current_spindown_time, spindown_time);
+        transform.scale = Vec3::splat(scale);
+
+        if let Some(material) = materials.get_mut(&scanner.material) {
+            material
+                .base_color
+                .set_a(ACTIVE_ALPHA * current_spindown_time / spindown_time);
+        }
+    } else {
+        let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
+        let base = transform.scale.x / get_coefficient(current, current);
+
+        aftercast.spindown_base = Some(base);
+
+        aftercast.current_spindown_time = Some(current);
+        aftercast.spindown_time = Some(current);
+    }
+}
+
+fn reset_module(
+    scanner: &RessourceScannerComponent,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    aftercast: &mut Mut<ModuleAftercastComponent>,
+    transform: &mut Mut<Transform>,
+) {
+    aftercast.current_spindown_time = None;
+    aftercast.spindown_time = None;
+
+    transform.scale = Vec3::ZERO;
+
+    if let Some(material) = materials.get_mut(&scanner.material) {
+        material.base_color.set_a(0.0);
     }
 }
 
