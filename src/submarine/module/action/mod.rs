@@ -23,7 +23,7 @@ pub fn update_module_channeling_state_transition(
             channel.current_duration = Some(duration);
 
             if duration >= channel.duration {
-                state.state.next(ModuleStatus::Active);
+                state.state.next(ModuleStatus::Aftercast);
                 channel.current_duration = None;
             }
         }
@@ -56,6 +56,7 @@ pub fn handle_module_state_for_channels(
                     channel.current_duration = Some(0.0);
                 }
             }
+            ModuleStatus::Aftercast => channel.current_duration = None,
             ModuleStatus::ShuttingDown => channel.current_duration = None,
             ModuleStatus::Inactive => channel.current_duration = None,
         }

@@ -8,7 +8,7 @@ use bevy_rapier3d::prelude::*;
 use self::{
     module::{
         action::{self, ressource_scanner},
-        engine, shutdown, startup,
+        aftercast, engine, shutdown, startup,
     },
     power::*,
     settings::*,
@@ -37,6 +37,8 @@ impl Plugin for SubmarinePlugin {
                     module::update_mass_by_module_mass,
                     // handle automatic state transitions
                     action::update_module_channeling_state_transition,
+                    aftercast::update_module_aftercast_state_transition,
+                    aftercast::update_module_aftercast_state_transition_with_aftercast_component,
                     startup::update_module_startup_state_transition,
                     shutdown::update_module_shutdown_state_transition,
                     shutdown::update_module_shutdown_state_transition_with_shutdown_component,
@@ -64,6 +66,7 @@ impl Plugin for SubmarinePlugin {
                 (
                     // actions
                     ressource_scanner::activate,
+                    ressource_scanner::deactivate,
                 )
                     .in_base_set(CoreSet::PostUpdate),
             )

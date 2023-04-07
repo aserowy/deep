@@ -9,6 +9,7 @@ use super::{
 };
 
 pub mod action;
+pub mod aftercast;
 pub mod engine;
 pub mod shutdown;
 pub mod startup;
@@ -57,7 +58,8 @@ impl ModuleState {
             (ModuleStatus::StartingUp, ModuleStatus::Active) => true,
             (ModuleStatus::Active, ModuleStatus::Triggered) => true,
             (ModuleStatus::Active, ModuleStatus::ShuttingDown) => true,
-            (ModuleStatus::Triggered, ModuleStatus::Active) => true,
+            (ModuleStatus::Triggered, ModuleStatus::Aftercast) => true,
+            (ModuleStatus::Aftercast, ModuleStatus::Active) => true,
             (ModuleStatus::Triggered, ModuleStatus::ShuttingDown) => true,
             (ModuleStatus::ShuttingDown, ModuleStatus::Inactive) => true,
             (ModuleStatus::Inactive, ModuleStatus::StartingUp) => true,
@@ -86,6 +88,7 @@ pub enum ModuleStatus {
     StartingUp,
     Active,
     Triggered,
+    Aftercast,
     ShuttingDown,
     Inactive,
 }
@@ -97,6 +100,7 @@ impl Display for ModuleStatus {
             ModuleStatus::StartingUp => "StartingUp",
             ModuleStatus::Active => "Active",
             ModuleStatus::Triggered => "Triggered",
+            ModuleStatus::Aftercast => "Aftercast",
             ModuleStatus::ShuttingDown => "ShuttingDown",
             ModuleStatus::Inactive => "Inactive",
         })?;
@@ -130,7 +134,7 @@ pub fn on_key_action_event(
                     if current_index == index {
                         let next_default = match state_component.state.status() {
                             ModuleStatus::Active => Some(ModuleStatus::Triggered),
-                            ModuleStatus::Triggered => Some(ModuleStatus::Active),
+                            ModuleStatus::Triggered => Some(ModuleStatus::Aftercast),
                             ModuleStatus::Inactive => Some(ModuleStatus::StartingUp),
                             _ => None,
                         };
@@ -149,7 +153,7 @@ pub fn on_key_action_event(
 }
 
 pub fn update_mass_by_module_mass(
-    mut query: Query<(&mut AdditionalMassProperties, &Children)>,
+    mut query: Query<(&mut AdditionalMassProperties, &Children), Changed<AdditionalMassProperties>>,
     mut child_query: Query<&mut ModuleMassComponent>,
 ) {
     for (mut additional_mass, children) in query.iter_mut() {

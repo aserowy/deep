@@ -88,16 +88,34 @@ pub fn activate(
     for (scanner, channel, mut transform) in query.iter_mut() {
         if let Some(span) = channel.current_duration {
             transform.scale = Vec3::splat(span * scanner.expanse_max);
-
             if let Some(material) = materials.get_mut(&scanner.material) {
                 material.base_color.set_a(0.5);
             }
-        } else {
-            // TODO: deactivate effect (shrink, fade)
-            transform.scale = Vec3::ZERO;
+        }
+    }
+}
 
-            if let Some(material) = materials.get_mut(&scanner.material) {
-                material.base_color.set_a(0.0);
+pub fn deactivate(
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut query: Query<
+        (
+            &RessourceScannerComponent,
+            &ChannelingComponent,
+            &mut Transform,
+        ),
+        Changed<ChannelingComponent>,
+    >,
+) {
+    for (scanner, channel, mut transform) in query.iter_mut() {
+        if channel.current_duration.is_none() {
+            if transform.scale.length() > 0.5 {
+
+            } else {
+                transform.scale = Vec3::ZERO;
+
+                if let Some(material) = materials.get_mut(&scanner.material) {
+                    material.base_color.set_a(0.0);
+                }
             }
         }
     }

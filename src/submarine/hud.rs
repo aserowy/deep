@@ -547,6 +547,7 @@ pub fn update_modules_by_module_state(
                     ModuleStatus::StartingUp => AQUAMARINE_25,
                     ModuleStatus::Active => AQUAMARINE,
                     ModuleStatus::Triggered => SLATE_BLUE,
+                    ModuleStatus::Aftercast => SLATE_BLUE_25,
                     ModuleStatus::ShuttingDown => FRENCH_VIOLET_25,
                     ModuleStatus::Inactive => FRENCH_VIOLET,
                     _ => SLATE_BLUE_25,
