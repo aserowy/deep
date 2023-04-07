@@ -182,7 +182,7 @@ fn setup_player_submarine(
                     angular_damping: 1.0,
                 },
                 GravityScale(0.0),
-                Collider::cuboid(5.0, 2.0, 2.0),
+                Collider::cuboid(2.0, 2.0, 5.0),
                 ColliderMassProperties::Mass(6.0 * 1000.0), // kg
                 AdditionalMassProperties::Mass(0.0),
             ),

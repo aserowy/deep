@@ -52,7 +52,7 @@ pub fn new_basic() -> (
             upward_force: 0.0,
             upward_force_max: 100.0 * 1000.0,
             nose_force: 0.0,
-            nose_force_max: 50.0 * 1000.0,
+            nose_force_max: 40.0 * 1000.0,
             spin_force: 0.0,
             spin_force_max: 50.0 * 1000.0,
         },
