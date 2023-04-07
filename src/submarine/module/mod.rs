@@ -11,7 +11,6 @@ use super::{
 pub mod action;
 pub mod aftercast;
 pub mod engine;
-pub mod shutdown;
 pub mod startup;
 
 #[derive(Bundle)]

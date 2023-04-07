@@ -4,7 +4,6 @@ use super::*;
 
 #[derive(Component)]
 pub struct ModuleStartupComponent {
-    // TODO: correct naming wps is watt and watt is Wh and current_watt is current Wh
     pub watt: f32,
     pub watt_hour: f32,
     pub remaining_watt_hour: Option<f32>,
@@ -45,7 +44,8 @@ pub fn update_power_capacity_by_module_startup(
                 if capacitor.watt_hour > consumption_max && remaining_watt_hour > consumption_max {
                     usage.remaining_watt_hour = Some(remaining_watt_hour - consumption_max);
                     capacitor.watt_hour -= consumption_max;
-                } else if capacitor.watt_hour < consumption_max && remaining_watt_hour > capacitor.watt_hour
+                } else if capacitor.watt_hour < consumption_max
+                    && remaining_watt_hour > capacitor.watt_hour
                 {
                     usage.remaining_watt_hour = Some(remaining_watt_hour - capacitor.watt_hour);
                     capacitor.watt_hour = 0.0;

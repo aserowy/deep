@@ -14,8 +14,8 @@ use crate::{
 
 use super::{
     module::{
-        action::ChannelingComponent, engine::EngineComponent, shutdown::ModuleShutdownComponent,
-        startup::ModuleStartupComponent, *, aftercast::ModuleAftercastComponent,
+        action::ChannelingComponent, aftercast::ModuleAftercastComponent, engine::EngineComponent,
+        startup::ModuleStartupComponent, *,
     },
     power::PowerCapacitorComponent,
 };
@@ -476,7 +476,8 @@ pub fn update_modules_consumption_by_module_channeling(
         for (details, channeling) in child_iter {
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
                 if channeling.current_duration.is_some() {
-                    text.sections[0].value = format!("-{:.0} kW", channeling.watt_per_second / 1000.0);
+                    text.sections[0].value =
+                        format!("-{:.0} kW", channeling.watt_per_second / 1000.0);
                     text.sections[0].style.color = Color::WHITE;
                 }
             }
@@ -484,33 +485,9 @@ pub fn update_modules_consumption_by_module_channeling(
     }
 }
 
-pub fn reset_cooldown_ui_component(
-    mut query: Query<&mut Text, With<ModuleCooldownUiComponent>>,
-) {
+pub fn reset_cooldown_ui_component(mut query: Query<&mut Text, With<ModuleCooldownUiComponent>>) {
     for mut text in query.iter_mut() {
         text.sections[0].style.color = TRANSPARENT;
-    }
-}
-
-pub fn update_modules_cooldown_by_module_shutdown(
-    camera_query: Query<&Children, With<Camera>>,
-    child_query: Query<
-        (&ModuleDetailsComponent, &ModuleShutdownComponent),
-        Changed<ModuleShutdownComponent>,
-    >,
-    mut icon_query: Query<(&mut Text, &ModuleCooldownUiComponent)>,
-) {
-    if let Ok(children) = camera_query.get_single() {
-        let child_iter = child_query.iter_many(children);
-        let mut query_iter = icon_query.iter_mut();
-        for (details, shutdown) in child_iter {
-            if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
-                if let Some(cooldown) = shutdown.current_spindown_time {
-                    text.sections[0].value = format!("{:.0}", cooldown);
-                    text.sections[0].style.color = Color::WHITE;
-                }
-            }
-        }
     }
 }
 

@@ -1,11 +1,10 @@
+use std::f32::consts::E;
+
 use bevy::{pbr::NotShadowCaster, prelude::*};
 
 use crate::{
     color,
-    submarine::module::{
-        aftercast::ModuleAftercastComponent, shutdown::ModuleShutdownComponent,
-        startup::ModuleStartupComponent, *,
-    },
+    submarine::module::{aftercast::ModuleAftercastComponent, startup::ModuleStartupComponent, *},
 };
 
 use super::ChannelingComponent;
@@ -29,7 +28,6 @@ pub fn new_basic(
     ModuleStartupComponent,
     ChannelingComponent,
     ModuleAftercastComponent,
-    ModuleShutdownComponent,
     PowerUsageComponent,
 ) {
     let material = materials.add(StandardMaterial {
@@ -78,7 +76,6 @@ pub fn new_basic(
             watt_per_second: 450.0 * 1000.0,
         },
         ModuleAftercastComponent::default(),
-        ModuleShutdownComponent::default(),
         PowerUsageComponent::default(),
     )
 }
@@ -96,7 +93,8 @@ pub fn activate(
 ) {
     for (scanner, channel, mut transform) in query.iter_mut() {
         if let Some(span) = channel.current_duration {
-            transform.scale = Vec3::splat(span * scanner.expanse_max / channel.duration);
+            transform.scale =
+                Vec3::splat(scanner.expanse_max * get_coefficient(span, channel.duration));
             if let Some(material) = materials.get_mut(&scanner.material) {
                 material.base_color.set_a(0.5);
             }
@@ -104,7 +102,6 @@ pub fn activate(
     }
 }
 
-// TODO: refactor logic of aftercast and shutdown
 pub fn deactivate_on_aftercast(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(
@@ -115,20 +112,24 @@ pub fn deactivate_on_aftercast(
     )>,
 ) {
     for (state, scanner, mut aftercast, mut transform) in query.iter_mut() {
-        if state.state.status() != &ModuleStatus::Aftercast {
+        if state.state.status() != &ModuleStatus::Aftercast
+            && state.state.status() != &ModuleStatus::ShuttingDown
+        {
             aftercast.current_spindown_time = None;
             aftercast.spindown_time = None;
 
             continue;
         }
 
-        if let (Some(spindown_time), Some(current_spindown_time)) =
-            (aftercast.spindown_time, aftercast.current_spindown_time)
-        {
+        if let (Some(spindown_base), Some(spindown_time), Some(current_spindown_time)) = (
+            aftercast.spindown_base,
+            aftercast.spindown_time,
+            aftercast.current_spindown_time,
+        ) {
             let current_scale = transform.scale.x;
 
-            if current_scale > 0.1 {
-                let scale = scanner.expanse_max * current_spindown_time / spindown_time;
+            if current_scale > 0.01 {
+                let scale = spindown_base * get_coefficient(current_spindown_time, spindown_time);
                 transform.scale = Vec3::splat(scale);
             } else {
                 transform.scale = Vec3::ZERO;
@@ -141,48 +142,13 @@ pub fn deactivate_on_aftercast(
         } else {
             let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
             aftercast.current_spindown_time = Some(current);
-            aftercast.spindown_time = Some(scanner.cleanup_in_seconds);
+            aftercast.spindown_base = Some(transform.scale.x);
+            aftercast.spindown_time = Some(current);
         }
     }
 }
 
-pub fn deactivate_on_shutdown(
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(
-        &ModuleStateComponent,
-        &RessourceScannerComponent,
-        &mut ModuleShutdownComponent,
-        &mut Transform,
-    )>,
-) {
-    for (state, scanner, mut shutdown, mut transform) in query.iter_mut() {
-        if state.state.status() != &ModuleStatus::ShuttingDown {
-            shutdown.current_spindown_time = None;
-            shutdown.spindown_time = None;
-
-            continue;
-        }
-
-        if let (Some(spindown_time), Some(current_spindown_time)) =
-            (shutdown.spindown_time, shutdown.current_spindown_time)
-        {
-            let current_scale = transform.scale.x;
-
-            if current_scale > 0.1 {
-                let scale = scanner.expanse_max * current_spindown_time / spindown_time;
-                transform.scale = Vec3::splat(scale);
-            } else {
-                transform.scale = Vec3::ZERO;
-                shutdown.current_spindown_time = Some(0.0);
-
-                if let Some(material) = materials.get_mut(&scanner.material) {
-                    material.base_color.set_a(0.0);
-                }
-            }
-        } else {
-            let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
-            shutdown.current_spindown_time = Some(current);
-            shutdown.spindown_time = Some(scanner.cleanup_in_seconds);
-        }
-    }
+fn get_coefficient(current: f32, max: f32) -> f32 {
+    // logistic function
+    1.0 / (1.0 + E.powf(5.0 - 10.0 * current / max))
 }

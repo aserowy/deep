@@ -8,7 +8,7 @@ use crate::submarine::{
     settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
-use super::{shutdown::ModuleShutdownComponent, *};
+use super::*;
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
@@ -30,7 +30,6 @@ pub fn new_basic() -> (
     ModuleMassComponent,
     EngineComponent,
     PowerUsageComponent,
-    ModuleShutdownComponent,
 ) {
     (
         ModuleBundle {
@@ -57,10 +56,6 @@ pub fn new_basic() -> (
             spin_force_max: 50.0 * 1000.0,
         },
         PowerUsageComponent::default(),
-        ModuleShutdownComponent {
-            spindown_time: Some(3.0),
-            current_spindown_time: None,
-        },
     )
 }
 
