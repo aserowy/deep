@@ -453,8 +453,8 @@ pub fn update_modules_consumption_by_module_startup(
         let mut query_iter = icon_query.iter_mut();
         for (details, startup) in child_iter {
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
-                if let Some(power_needed) = startup.current_watt {
-                    text.sections[0].value = format!("{:.0} kW", power_needed / 1000.0);
+                if let Some(power_needed) = startup.remaining_watt_hour {
+                    text.sections[0].value = format!("{:.0} Wh", power_needed);
                     text.sections[0].style.color = Color::WHITE;
                 }
             }

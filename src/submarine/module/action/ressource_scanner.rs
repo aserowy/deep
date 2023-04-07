@@ -68,9 +68,9 @@ pub fn new_basic(
             cleanup_in_seconds: 4.0,
         },
         ModuleStartupComponent {
-            watt_per_second: 1500.0 * 1000.0,
-            watt: 5000.0 * 1000.0,
-            current_watt: None,
+            watt: 1500.0 * 1000.0,
+            watt_hour: 1500.0,
+            remaining_watt_hour: None,
         },
         ChannelingComponent {
             current_duration: None,
