@@ -58,7 +58,7 @@ pub fn new_basic() -> (
         },
         PowerUsageComponent::default(),
         ModuleShutdownComponent {
-            spindown_time: 3.0,
+            spindown_time: Some(3.0),
             current_spindown_time: None,
         },
     )

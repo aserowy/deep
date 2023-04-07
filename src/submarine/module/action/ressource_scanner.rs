@@ -2,7 +2,10 @@ use bevy::{pbr::NotShadowCaster, prelude::*};
 
 use crate::{
     color,
-    submarine::module::{aftercast::ModuleAftercastComponent, startup::ModuleStartupComponent, *},
+    submarine::module::{
+        aftercast::ModuleAftercastComponent, shutdown::ModuleShutdownComponent,
+        startup::ModuleStartupComponent, *,
+    },
 };
 
 use super::ChannelingComponent;
@@ -11,6 +14,7 @@ use super::ChannelingComponent;
 pub struct RessourceScannerComponent {
     pub material: Handle<StandardMaterial>,
     pub expanse_max: f32,
+    pub cleanup_in_seconds: f32,
 }
 
 pub fn new_basic(
@@ -25,6 +29,7 @@ pub fn new_basic(
     ModuleStartupComponent,
     ChannelingComponent,
     ModuleAftercastComponent,
+    ModuleShutdownComponent,
     PowerUsageComponent,
 ) {
     let material = materials.add(StandardMaterial {
@@ -60,6 +65,7 @@ pub fn new_basic(
         RessourceScannerComponent {
             material,
             expanse_max: 42.0,
+            cleanup_in_seconds: 4.0,
         },
         ModuleStartupComponent {
             watt_per_second: 1500.0 * 1000.0,
@@ -72,6 +78,7 @@ pub fn new_basic(
             watt_per_second: 450.0 * 1000.0,
         },
         ModuleAftercastComponent::default(),
+        ModuleShutdownComponent::default(),
         PowerUsageComponent::default(),
     )
 }
@@ -97,7 +104,8 @@ pub fn activate(
     }
 }
 
-pub fn deactivate(
+// TODO: refactor logic of aftercast and shutdown
+pub fn deactivate_on_aftercast(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(
         &ModuleStateComponent,
@@ -118,12 +126,9 @@ pub fn deactivate(
             (aftercast.spindown_time, aftercast.current_spindown_time)
         {
             let current_scale = transform.scale.x;
-            info!("current: {}", current_scale);
-            if current_scale > 0.5 {
-                let scale = current_scale
-                    - current_scale * (spindown_time - current_spindown_time) / spindown_time;
 
-                info!("new: {}", scale);
+            if current_scale > 0.1 {
+                let scale = scanner.expanse_max * current_spindown_time / spindown_time;
                 transform.scale = Vec3::splat(scale);
             } else {
                 transform.scale = Vec3::ZERO;
@@ -134,9 +139,50 @@ pub fn deactivate(
                 }
             }
         } else {
-            info!("{}", transform.scale.length());
-            aftercast.spindown_time = Some(transform.scale.length());
-            aftercast.current_spindown_time = aftercast.spindown_time.clone();
+            let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
+            aftercast.current_spindown_time = Some(current);
+            aftercast.spindown_time = Some(scanner.cleanup_in_seconds);
+        }
+    }
+}
+
+pub fn deactivate_on_shutdown(
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut query: Query<(
+        &ModuleStateComponent,
+        &RessourceScannerComponent,
+        &mut ModuleShutdownComponent,
+        &mut Transform,
+    )>,
+) {
+    for (state, scanner, mut shutdown, mut transform) in query.iter_mut() {
+        if state.state.status() != &ModuleStatus::ShuttingDown {
+            shutdown.current_spindown_time = None;
+            shutdown.spindown_time = None;
+
+            continue;
+        }
+
+        if let (Some(spindown_time), Some(current_spindown_time)) =
+            (shutdown.spindown_time, shutdown.current_spindown_time)
+        {
+            let current_scale = transform.scale.x;
+
+            if current_scale > 0.1 {
+                let scale = scanner.expanse_max * current_spindown_time / spindown_time;
+                transform.scale = Vec3::splat(scale);
+            } else {
+                transform.scale = Vec3::ZERO;
+                shutdown.current_spindown_time = Some(0.0);
+
+                if let Some(material) = materials.get_mut(&scanner.material) {
+                    material.base_color.set_a(0.0);
+                }
+            }
+        } else {
+            let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
+            shutdown.current_spindown_time = Some(current);
+            shutdown.spindown_time = Some(scanner.cleanup_in_seconds);
         }
     }
 }

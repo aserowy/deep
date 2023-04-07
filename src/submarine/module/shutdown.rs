@@ -2,9 +2,9 @@ use bevy::prelude::*;
 
 use super::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ModuleShutdownComponent {
-    pub spindown_time: f32,
+    pub spindown_time: Option<f32>,
     pub current_spindown_time: Option<f32>,
 }
 
@@ -19,16 +19,16 @@ pub fn update_module_shutdown_state_transition_with_shutdown_component(
             continue;
         }
 
-        if let Some(spinup_time) = spinup_component.current_spindown_time {
-            let spinup_time = spinup_time - dt;
-            if spinup_time > 0.0 {
-                spinup_component.current_spindown_time = Some(spinup_time);
+        if let Some(spindown_time) = spinup_component.current_spindown_time {
+            let spindown_time = spindown_time - dt;
+            if spindown_time > 0.0 {
+                spinup_component.current_spindown_time = Some(spindown_time);
             } else {
                 spinup_component.current_spindown_time = None;
                 state_component.state.next(ModuleStatus::Inactive);
             }
         } else {
-            spinup_component.current_spindown_time = Some(spinup_component.spindown_time);
+            spinup_component.current_spindown_time = spinup_component.spindown_time;
         }
     }
 }

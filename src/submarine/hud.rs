@@ -15,7 +15,7 @@ use crate::{
 use super::{
     module::{
         action::ChannelingComponent, engine::EngineComponent, shutdown::ModuleShutdownComponent,
-        startup::ModuleStartupComponent, *,
+        startup::ModuleStartupComponent, *, aftercast::ModuleAftercastComponent,
     },
     power::PowerCapacitorComponent,
 };
@@ -507,6 +507,28 @@ pub fn update_modules_cooldown_by_module_shutdown(
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
                 if let Some(cooldown) = shutdown.current_spindown_time {
                     text.sections[0].value = format!("{:.0}", cooldown);
+                    text.sections[0].style.color = Color::WHITE;
+                }
+            }
+        }
+    }
+}
+
+pub fn update_modules_cooldown_by_module_aftercast(
+    camera_query: Query<&Children, With<Camera>>,
+    child_query: Query<
+        (&ModuleDetailsComponent, &ModuleAftercastComponent),
+        Changed<ModuleAftercastComponent>,
+    >,
+    mut cooldown_query: Query<(&mut Text, &ModuleCooldownUiComponent)>,
+) {
+    if let Ok(children) = camera_query.get_single() {
+        let child_iter = child_query.iter_many(children);
+        let mut query_iter = cooldown_query.iter_mut();
+        for (details, aftercast) in child_iter {
+            if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
+                if let Some(duration) = aftercast.current_spindown_time {
+                    text.sections[0].value = format!("{:.0}", duration);
                     text.sections[0].style.color = Color::WHITE;
                 }
             }

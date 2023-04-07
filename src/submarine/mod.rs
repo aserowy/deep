@@ -66,7 +66,8 @@ impl Plugin for SubmarinePlugin {
                 (
                     // actions
                     ressource_scanner::activate,
-                    ressource_scanner::deactivate,
+                    ressource_scanner::deactivate_on_aftercast,
+                    ressource_scanner::deactivate_on_shutdown,
                 )
                     .in_base_set(CoreSet::PostUpdate),
             )
@@ -76,11 +77,12 @@ impl Plugin for SubmarinePlugin {
                     hud::reset_consumption_ui_component,
                     hud::reset_cooldown_ui_component,
                     hud::update_capacity_node_on_capacitor_componend_changed,
-                    hud::update_modules_cooldown_by_module_shutdown,
-                    hud::update_modules_consumption_by_module_startup,
                     hud::update_modules_by_module_state,
-                    hud::update_modules_cooldown_by_module_channeling,
                     hud::update_modules_consumption_by_module_channeling,
+                    hud::update_modules_consumption_by_module_startup,
+                    hud::update_modules_cooldown_by_module_aftercast,
+                    hud::update_modules_cooldown_by_module_channeling,
+                    hud::update_modules_cooldown_by_module_shutdown,
                     hud::update_thrust_node_on_engine_component_changed,
                     hud::update_velocity_node,
                 )

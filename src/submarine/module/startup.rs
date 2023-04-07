@@ -4,6 +4,7 @@ use super::*;
 
 #[derive(Component)]
 pub struct ModuleStartupComponent {
+    // TODO: correct naming wps is watt and watt is Wh and current_watt is current Wh
     pub watt_per_second: f32,
     pub watt: f32,
     pub current_watt: Option<f32>,
