@@ -4,7 +4,7 @@ use crate::submarine::power::PowerUsageComponent;
 
 pub mod ressource_scanner;
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Default)]
 pub struct ChannelingComponent {
     pub current_duration: Option<f32>,
     pub duration: f32,

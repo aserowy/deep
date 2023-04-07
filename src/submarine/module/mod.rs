@@ -25,7 +25,7 @@ pub struct ModuleDetailsComponent {
     pub icon: String,
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ModuleMassComponent {
     pub initialized: bool,
     pub mass: f32,

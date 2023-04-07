@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ModuleStartupComponent {
     pub watt: f32,
     pub watt_hour: f32,

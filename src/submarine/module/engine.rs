@@ -8,12 +8,12 @@ use crate::submarine::{
     settings::{KeyAction, KeyActionEvent, KeyPress},
 };
 
-use super::*;
+use super::{startup::ModuleStartupComponent, *};
 
 const MOVEMENT_SPOT: f32 = 125.0;
 
 // INFO: force in N m/s
-#[derive(Clone, Component, Debug, PartialEq)]
+#[derive(Clone, Component, Debug, Default, PartialEq)]
 pub struct EngineComponent {
     pub forward_force: f32,
     pub forward_force_max: f32,
@@ -29,6 +29,7 @@ pub fn new_basic() -> (
     ModuleBundle,
     ModuleMassComponent,
     EngineComponent,
+    ModuleStartupComponent,
     PowerUsageComponent,
 ) {
     (
@@ -42,18 +43,20 @@ pub fn new_basic() -> (
             },
         },
         ModuleMassComponent {
-            initialized: false,
             mass: 1.5 * 1000.0,
+            ..default()
         },
         EngineComponent {
-            forward_force: 0.0,
             forward_force_max: 250.0 * 1000.0,
-            upward_force: 0.0,
             upward_force_max: 100.0 * 1000.0,
-            nose_force: 0.0,
             nose_force_max: 40.0 * 1000.0,
-            spin_force: 0.0,
             spin_force_max: 50.0 * 1000.0,
+            ..default()
+        },
+        ModuleStartupComponent {
+            watt: 1000.0 * 1000.0,
+            watt_hour: 1500.0,
+            ..default()
         },
         PowerUsageComponent::default(),
     )

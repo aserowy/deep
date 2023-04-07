@@ -50,8 +50,8 @@ pub fn new_basic(
             },
         },
         ModuleMassComponent {
-            initialized: false,
             mass: 2.5 * 1000.0,
+            ..default()
         },
         PbrBundle {
             mesh: meshes.add(shape::UVSphere::default().into()),
@@ -68,12 +68,12 @@ pub fn new_basic(
         ModuleStartupComponent {
             watt: 1500.0 * 1000.0,
             watt_hour: 1500.0,
-            remaining_watt_hour: None,
+            ..default()
         },
         ChannelingComponent {
-            current_duration: None,
             duration: 8.0,
             watt_per_second: 450.0 * 1000.0,
+            ..default()
         },
         ModuleAftercastComponent::default(),
         PowerUsageComponent::default(),
