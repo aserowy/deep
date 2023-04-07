@@ -279,7 +279,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
                 },
             ),
             TextSection::new(
-                " N m/s",
+                " kN m/s",
                 TextStyle {
                     font,
                     font_size: 15.0,
@@ -315,8 +315,8 @@ pub fn update_thrust_node_on_engine_component_changed(
                 force_max += engine.forward_force_max;
             }
 
-            text.sections[0].value = format!("{:.0}", force);
-            text.sections[2].value = format!("{:.0}", force_max);
+            text.sections[0].value = format!("{:.0}", force / 1000.0);
+            text.sections[2].value = format!("{:.0}", force_max / 1000.0);
         }
     }
 }
@@ -432,7 +432,15 @@ fn add_module_to_module_nodes(
         });
 }
 
-pub fn update_modules_by_module_startup(
+pub fn reset_consumption_ui_component(
+    mut query: Query<&mut Text, With<ModuleConsumptionUiComponent>>,
+) {
+    for mut text in query.iter_mut() {
+        text.sections[0].style.color = TRANSPARENT;
+    }
+}
+
+pub fn update_modules_consumption_by_module_startup(
     camera_query: Query<&Children, With<Camera>>,
     child_query: Query<
         (&ModuleDetailsComponent, &ModuleStartupComponent),
@@ -446,18 +454,45 @@ pub fn update_modules_by_module_startup(
         for (details, startup) in child_iter {
             if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
                 if let Some(power_needed) = startup.current_watt {
-                    text.sections[0].value = format!("{:.0}", power_needed);
+                    text.sections[0].value = format!("{:.0} kW", power_needed / 1000.0);
                     text.sections[0].style.color = Color::WHITE;
-                } else {
-                    text.sections[0].value = "0".to_string();
-                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
                 }
             }
         }
     }
 }
 
-pub fn update_modules_by_module_shutdown(
+pub fn update_modules_consumption_by_module_channeling(
+    camera_query: Query<&Children, With<Camera>>,
+    child_query: Query<
+        (&ModuleDetailsComponent, &ChannelingComponent),
+        Changed<ChannelingComponent>,
+    >,
+    mut consumption_query: Query<(&mut Text, &ModuleConsumptionUiComponent)>,
+) {
+    if let Ok(children) = camera_query.get_single() {
+        let child_iter = child_query.iter_many(children);
+        let mut query_iter = consumption_query.iter_mut();
+        for (details, channeling) in child_iter {
+            if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
+                if channeling.current_duration.is_some() {
+                    text.sections[0].value = format!("-{:.0} kW", channeling.watt_per_second / 1000.0);
+                    text.sections[0].style.color = Color::WHITE;
+                }
+            }
+        }
+    }
+}
+
+pub fn reset_cooldown_ui_component(
+    mut query: Query<&mut Text, With<ModuleCooldownUiComponent>>,
+) {
+    for mut text in query.iter_mut() {
+        text.sections[0].style.color = TRANSPARENT;
+    }
+}
+
+pub fn update_modules_cooldown_by_module_shutdown(
     camera_query: Query<&Children, With<Camera>>,
     child_query: Query<
         (&ModuleDetailsComponent, &ModuleShutdownComponent),
@@ -473,9 +508,6 @@ pub fn update_modules_by_module_shutdown(
                 if let Some(cooldown) = shutdown.current_spindown_time {
                     text.sections[0].value = format!("{:.0}", cooldown);
                     text.sections[0].style.color = Color::WHITE;
-                } else {
-                    text.sections[0].value = "0".to_string();
-                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
                 }
             }
         }
@@ -498,34 +530,6 @@ pub fn update_modules_cooldown_by_module_channeling(
                 if let Some(duration) = channeling.current_duration {
                     text.sections[0].value = format!("{:.0}", channeling.duration - duration);
                     text.sections[0].style.color = Color::WHITE;
-                } else {
-                    text.sections[0].value = "0".to_string();
-                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
-                }
-            }
-        }
-    }
-}
-
-pub fn update_modules_consumption_by_module_channeling(
-    camera_query: Query<&Children, With<Camera>>,
-    child_query: Query<
-        (&ModuleDetailsComponent, &ChannelingComponent),
-        Changed<ChannelingComponent>,
-    >,
-    mut consumption_query: Query<(&mut Text, &ModuleConsumptionUiComponent)>,
-) {
-    if let Ok(children) = camera_query.get_single() {
-        let child_iter = child_query.iter_many(children);
-        let mut query_iter = consumption_query.iter_mut();
-        for (details, channeling) in child_iter {
-            if let Some((mut text, _)) = query_iter.find(|cmp| cmp.1 .0 == details.id) {
-                if channeling.current_duration.is_some() {
-                    text.sections[0].value = format!("-{:.0}", channeling.watt_per_second);
-                    text.sections[0].style.color = Color::WHITE;
-                } else {
-                    text.sections[0].value = "0".to_string();
-                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, 0.0);
                 }
             }
         }
@@ -544,13 +548,13 @@ pub fn update_modules_by_module_state(
         for (mut icon, component) in icons {
             if let Some((_, state)) = child_iter.find(|cmp| cmp.0.id == component.0) {
                 icon.sections[0].style.color = match state.state.status() {
+                    ModuleStatus::Passive => UNITED_NATIONS_BLUE_25,
                     ModuleStatus::StartingUp => AQUAMARINE_25,
                     ModuleStatus::Active => AQUAMARINE,
                     ModuleStatus::Triggered => SLATE_BLUE,
                     ModuleStatus::Aftercast => SLATE_BLUE_25,
                     ModuleStatus::ShuttingDown => FRENCH_VIOLET_25,
                     ModuleStatus::Inactive => FRENCH_VIOLET,
-                    _ => SLATE_BLUE_25,
                 }
             }
         }

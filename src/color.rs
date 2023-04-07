@@ -13,6 +13,12 @@ use bevy::prelude::Color;
 --aquamarine: #80ffdb;
  */
 
+pub const TRANSPARENT: Color = Color::Rgba {
+    red: 1.0,
+    green: 1.0,
+    blue: 1.0,
+    alpha: 0.0,
+};
 pub const FRENCH_VIOLET: Color = Color::Hsla {
     hue: 278.0,
     saturation: 1.0,

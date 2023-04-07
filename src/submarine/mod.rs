@@ -73,15 +73,18 @@ impl Plugin for SubmarinePlugin {
             .add_systems(
                 (
                     // ui
+                    hud::reset_consumption_ui_component,
+                    hud::reset_cooldown_ui_component,
                     hud::update_capacity_node_on_capacitor_componend_changed,
-                    hud::update_modules_by_module_shutdown,
-                    hud::update_modules_by_module_startup,
+                    hud::update_modules_cooldown_by_module_shutdown,
+                    hud::update_modules_consumption_by_module_startup,
                     hud::update_modules_by_module_state,
                     hud::update_modules_cooldown_by_module_channeling,
                     hud::update_modules_consumption_by_module_channeling,
                     hud::update_thrust_node_on_engine_component_changed,
                     hud::update_velocity_node,
                 )
+                    .chain()
                     .in_base_set(CoreSet::PostUpdate),
             );
     }
