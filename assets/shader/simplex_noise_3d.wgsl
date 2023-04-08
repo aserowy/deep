@@ -1,9 +1,7 @@
-//  MIT License. © Ian McEwan, Stefan Gustavson, Munrocket
-
 fn permute4(x: vec4<f32>) -> vec4<f32> { return ((x * 34. + 1.) * x) % vec4<f32>(289.); }
 fn taylorInvSqrt4(r: vec4<f32>) -> vec4<f32> { return 1.79284291400159 - 0.85373472095314 * r; }
 
-fn simplexNoise3(v: vec3<f32>) -> f32 {
+fn simplex(v: vec3<f32>) -> f32 {
   let C = vec2<f32>(1. / 6., 1. / 3.);
   let D = vec4<f32>(0., 0.5, 1., 2.);
 

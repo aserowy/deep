@@ -47,7 +47,7 @@ pub fn new_basic(
         MaterialMeshBundle {
             mesh: meshes.add(shape::UVSphere::default().into()),
             material: materials.add(ForceFieldMaterial {
-                color: color::TURQUOISE_25,
+                color: color::GRAPE,
                 alpha_mode: AlphaMode::Blend,
                 ..default()
             }),
