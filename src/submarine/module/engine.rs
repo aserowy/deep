@@ -18,6 +18,7 @@ pub struct EngineComponent {
     pub forward_force: f32,
     pub forward_force_max: f32,
     pub upward_force: f32,
+    pub downward_force: f32,
     pub upward_force_max: f32,
     pub nose_force: f32,
     pub nose_force_max: f32,
@@ -120,39 +121,38 @@ pub fn on_key_action_event(
 
 fn handle_vertical_thrust(
     force: &mut ExternalForce,
-    thrust: &mut EngineComponent,
+    engine: &mut EngineComponent,
     transform: &Transform,
     is_upward: bool,
     key_press: &KeyPress,
 ) {
-    let current_upward_thrust = thrust.upward_force;
+    let current_force = engine.upward_force - engine.downward_force;
 
     match key_press {
         KeyPress::Down => {
-            thrust.upward_force += if is_upward {
-                thrust.upward_force_max
+            if is_upward {
+                engine.upward_force = engine.upward_force_max;
             } else {
-                thrust.upward_force_max * -1.0
+                engine.downward_force = engine.upward_force_max;
             }
         }
         KeyPress::Release => {
-            thrust.upward_force -= if is_upward {
-                thrust.upward_force_max
+            if is_upward {
+                engine.upward_force = 0.0;
             } else {
-                thrust.upward_force_max * -1.0
+                engine.downward_force = 0.0;
             }
         }
         _ => (),
     }
 
-    if thrust.upward_force.abs() > thrust.upward_force_max {
-        let coefficient = if thrust.upward_force > 0.0 { 1.0 } else { -1.0 };
-
-        thrust.upward_force = thrust.upward_force_max * coefficient;
-    }
-
-    if thrust.upward_force != current_upward_thrust {
-        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
+    if current_force != (engine.upward_force - engine.downward_force) {
+        force.force = get_current_force(
+            transform,
+            engine.forward_force,
+            engine.upward_force,
+            engine.downward_force,
+        );
     }
 }
 
@@ -165,7 +165,12 @@ fn handle_forward_stop(
     thrust.forward_force = 0.0;
 
     if thrust.forward_force != current_forward_thrust {
-        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
+        force.force = get_current_force(
+            transform,
+            thrust.forward_force,
+            thrust.upward_force,
+            thrust.downward_force,
+        );
     }
 }
 
@@ -196,15 +201,25 @@ fn handle_forward_thrust(
     }
 
     if thrust.forward_force != current_forward_thrust {
-        force.force = get_current_force(transform, thrust.forward_force, thrust.upward_force);
+        force.force = get_current_force(
+            transform,
+            thrust.forward_force,
+            thrust.upward_force,
+            thrust.downward_force,
+        );
     }
 }
 
-fn get_current_force(transform: &Transform, forward_thrust: f32, upward_thrust: f32) -> Vec3 {
+fn get_current_force(
+    transform: &Transform,
+    forward_thrust: f32,
+    upward_thrust: f32,
+    downward_force: f32,
+) -> Vec3 {
     let forward = transform.forward().normalize();
     let upward = transform.up().normalize();
 
-    forward * forward_thrust + upward * upward_thrust
+    forward * forward_thrust + upward * (upward_thrust - downward_force)
 }
 
 pub fn on_mouse_position_change(
@@ -227,8 +242,12 @@ pub fn on_mouse_position_change(
             let window = windows.single();
 
             if let Some(cursor_position) = window.cursor_position() {
-                force.force =
-                    get_current_force(&transform, engine.forward_force, engine.upward_force);
+                force.force = get_current_force(
+                    &transform,
+                    engine.forward_force,
+                    engine.upward_force,
+                    engine.downward_force,
+                );
 
                 let current_spin_thrust = engine.spin_force;
                 let current_nose_thrust = engine.nose_force;
@@ -277,7 +296,7 @@ pub fn set_power_usage_for_engines(
 
     for (engine, mut usage) in query.iter_mut() {
         let consumption = (engine.forward_force.abs()
-            + engine.upward_force.abs()
+            + (engine.upward_force - engine.downward_force).abs()
             + engine.nose_force.abs()
             + engine.spin_force.abs())
             * dt;
@@ -309,6 +328,7 @@ pub fn handle_module_state_for_engines(
 fn set_stop(engine: &mut Mut<EngineComponent>, force: &mut Mut<ExternalForce>) {
     engine.forward_force = 0.0;
     engine.upward_force = 0.0;
+    engine.downward_force = 0.0;
     engine.nose_force = 0.0;
     engine.spin_force = 0.0;
 
