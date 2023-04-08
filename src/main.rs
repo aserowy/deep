@@ -13,7 +13,10 @@ mod terrain;
 fn main() {
     App::new()
         .insert_resource(Msaa::Sample4)
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            watch_for_changes: true,
+            ..default()
+        }))
         // debug
         // .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(EditorPlugin::default())

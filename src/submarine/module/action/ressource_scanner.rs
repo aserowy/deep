@@ -4,27 +4,25 @@ use bevy::{pbr::NotShadowCaster, prelude::*};
 
 use crate::{
     color,
+    render::force_field::ForceFieldMaterial,
     submarine::module::{aftercast::ModuleAftercastComponent, startup::ModuleStartupComponent, *},
 };
 
 use super::ChannelingComponent;
 
-const ACTIVE_ALPHA: f32 = 0.25;
-
 #[derive(Clone, Component)]
 pub struct RessourceScannerComponent {
-    pub material: Handle<StandardMaterial>,
     pub expanse_max: f32,
     pub cleanup_in_seconds: f32,
 }
 
 pub fn new_basic(
     meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    materials: &mut ResMut<Assets<ForceFieldMaterial>>,
 ) -> (
     ModuleBundle,
     ModuleMassComponent,
-    PbrBundle,
+    MaterialMeshBundle<ForceFieldMaterial>,
     NotShadowCaster,
     RessourceScannerComponent,
     ModuleStartupComponent,
@@ -32,15 +30,6 @@ pub fn new_basic(
     ModuleAftercastComponent,
     PowerUsageComponent,
 ) {
-    let material = materials.add(StandardMaterial {
-        base_color: color::TURQUOISE_25,
-        emissive: color::SKY_BLUE_25,
-        alpha_mode: AlphaMode::Blend,
-        double_sided: true,
-        cull_mode: None,
-        ..default()
-    });
-
     (
         ModuleBundle {
             details: ModuleDetailsComponent {
@@ -55,15 +44,18 @@ pub fn new_basic(
             mass: 2.5 * 1000.0,
             ..default()
         },
-        PbrBundle {
+        MaterialMeshBundle {
             mesh: meshes.add(shape::UVSphere::default().into()),
-            material: material.clone(),
+            material: materials.add(ForceFieldMaterial {
+                color: color::TURQUOISE_25,
+                alpha_mode: AlphaMode::Blend,
+                ..default()
+            }),
             transform: Transform::from_scale(Vec3::ZERO),
             ..default()
         },
         NotShadowCaster,
         RessourceScannerComponent {
-            material,
             expanse_max: 42.0,
             cleanup_in_seconds: 4.0,
         },
@@ -83,7 +75,6 @@ pub fn new_basic(
 }
 
 pub fn activate(
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<
         (
             &RessourceScannerComponent,
@@ -97,16 +88,11 @@ pub fn activate(
         if let Some(span) = channel.current_duration {
             let scale = scanner.expanse_max * get_coefficient(span, channel.duration);
             transform.scale = Vec3::splat(scale);
-
-            if let Some(material) = materials.get_mut(&scanner.material) {
-                material.base_color.set_a(ACTIVE_ALPHA);
-            }
         }
     }
 }
 
 pub fn deactivate_on_aftercast(
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(
         &ModuleStateComponent,
         &RessourceScannerComponent,
@@ -117,20 +103,15 @@ pub fn deactivate_on_aftercast(
     for (state, scanner, mut aftercast, mut transform) in query.iter_mut() {
         match state.state.status() {
             ModuleStatus::Triggered => continue,
-            ModuleStatus::Aftercast => {
-                cleanup_effect(scanner, &mut materials, &mut aftercast, &mut transform)
-            }
-            ModuleStatus::ShuttingDown => {
-                cleanup_effect(scanner, &mut materials, &mut aftercast, &mut transform)
-            }
-            _ => reset_module(scanner, &mut materials, &mut aftercast, &mut transform),
+            ModuleStatus::Aftercast => cleanup_effect(scanner, &mut aftercast, &mut transform),
+            ModuleStatus::ShuttingDown => cleanup_effect(scanner, &mut aftercast, &mut transform),
+            _ => reset_module(&mut aftercast, &mut transform),
         }
     }
 }
 
 fn cleanup_effect(
     scanner: &RessourceScannerComponent,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
     aftercast: &mut ModuleAftercastComponent,
     transform: &mut Transform,
 ) {
@@ -141,12 +122,6 @@ fn cleanup_effect(
     ) {
         let scale = spindown_base * get_coefficient(current_spindown_time, spindown_time);
         transform.scale = Vec3::splat(scale);
-
-        if let Some(material) = materials.get_mut(&scanner.material) {
-            material
-                .base_color
-                .set_a(ACTIVE_ALPHA * current_spindown_time / spindown_time);
-        }
     } else {
         let current = scanner.cleanup_in_seconds * transform.scale.x / scanner.expanse_max;
         let base = transform.scale.x / get_coefficient(current, current);
@@ -158,20 +133,11 @@ fn cleanup_effect(
     }
 }
 
-fn reset_module(
-    scanner: &RessourceScannerComponent,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    aftercast: &mut Mut<ModuleAftercastComponent>,
-    transform: &mut Mut<Transform>,
-) {
+fn reset_module(aftercast: &mut Mut<ModuleAftercastComponent>, transform: &mut Mut<Transform>) {
     aftercast.current_spindown_time = None;
     aftercast.spindown_time = None;
 
     transform.scale = Vec3::ZERO;
-
-    if let Some(material) = materials.get_mut(&scanner.material) {
-        material.base_color.set_a(0.0);
-    }
 }
 
 fn get_coefficient(current: f32, max: f32) -> f32 {

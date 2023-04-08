@@ -1,9 +1,15 @@
 use bevy::{
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
+    core_pipeline::{
+        bloom::BloomSettings,
+        prepass::{DepthPrepass, NormalPrepass},
+        tonemapping::Tonemapping,
+    },
     prelude::*,
 };
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
+
+use crate::render::force_field::ForceFieldMaterial;
 
 use self::{
     module::{
@@ -91,31 +97,35 @@ impl Plugin for SubmarinePlugin {
 fn setup_player_submarine(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<ForceFieldMaterial>>,
 ) {
     info!("setup_player_submarine");
 
     commands
         .spawn((
-            Camera3dBundle {
-                camera: Camera {
-                    hdr: true,
+            (
+                Camera3dBundle {
+                    camera: Camera {
+                        hdr: true,
+                        ..default()
+                    },
+                    tonemapping: Tonemapping::AcesFitted,
+                    transform: Transform::from_xyz(0.0, 0.0, 0.0),
                     ..default()
                 },
-                tonemapping: Tonemapping::AcesFitted,
-                transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                ..default()
-            },
-            BloomSettings {
-                intensity: 0.25,
-                ..default()
-            },
-            FogSettings {
-                color: Color::rgb(0.0, 0.36, 0.45),
-                falloff: FogFalloff::from_visibility_color(256.0, Color::rgb(0.35, 0.5, 0.66)),
-                ..default()
-            },
-            AtmosphereCamera::default(),
+                DepthPrepass,
+                NormalPrepass,
+                BloomSettings {
+                    intensity: 0.25,
+                    ..default()
+                },
+                FogSettings {
+                    color: Color::rgb(0.0, 0.36, 0.45),
+                    falloff: FogFalloff::from_visibility_color(256.0, Color::rgb(0.35, 0.5, 0.66)),
+                    ..default()
+                },
+                AtmosphereCamera::default(),
+            ),
             // hud & settings
             (
                 VisibilityBundle {
