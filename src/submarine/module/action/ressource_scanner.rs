@@ -11,7 +11,7 @@ use crate::{
 use super::ChannelingComponent;
 
 #[derive(Clone, Component)]
-pub struct RessourceScannerComponent {
+pub struct ExpandingSphereEffectComponent {
     pub expanse_max: f32,
     pub cleanup_in_seconds: f32,
 }
@@ -24,7 +24,7 @@ pub fn new_basic(
     ModuleMassComponent,
     MaterialMeshBundle<ForceFieldMaterial>,
     NotShadowCaster,
-    RessourceScannerComponent,
+    ExpandingSphereEffectComponent,
     ModuleStartupComponent,
     ChannelingComponent,
     ModuleAftercastComponent,
@@ -55,7 +55,7 @@ pub fn new_basic(
             ..default()
         },
         NotShadowCaster,
-        RessourceScannerComponent {
+        ExpandingSphereEffectComponent {
             expanse_max: 42.0,
             cleanup_in_seconds: 4.0,
         },
@@ -77,7 +77,7 @@ pub fn new_basic(
 pub fn activate(
     mut query: Query<
         (
-            &RessourceScannerComponent,
+            &ExpandingSphereEffectComponent,
             &ChannelingComponent,
             &mut Transform,
         ),
@@ -95,7 +95,7 @@ pub fn activate(
 pub fn deactivate_on_aftercast(
     mut query: Query<(
         &ModuleStateComponent,
-        &RessourceScannerComponent,
+        &ExpandingSphereEffectComponent,
         &mut ModuleAftercastComponent,
         &mut Transform,
     )>,
@@ -111,7 +111,7 @@ pub fn deactivate_on_aftercast(
 }
 
 fn cleanup_effect(
-    scanner: &RessourceScannerComponent,
+    scanner: &ExpandingSphereEffectComponent,
     aftercast: &mut ModuleAftercastComponent,
     transform: &mut Transform,
 ) {

@@ -3,7 +3,6 @@
 #import bevy_pbr::mesh_view_bindings
 #import bevy_pbr::prepass_utils
 
-// #import deep::simplex_noise_3d
 #import deep::worley_noise_3d
 #import deep::fresnel
 
@@ -39,8 +38,8 @@ fn fragment(
 
     let color = vec3(material.color[0], material.color[1], material.color[2]) * alpha * 5.0;
     if is_front {
-        return vec4(color, fresnel * 0.5 + intersection);
+        return vec4(color, (fresnel * 0.5 + intersection) * material.color[3]);
     } else {
-        return vec4(color, intersection);
+        return vec4(color, intersection * material.color[3]);
     }
 }
