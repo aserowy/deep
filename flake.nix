@@ -22,8 +22,8 @@
         devShell =
           pkgs.mkShell rec {
             buildInputs = [
-
               # coding env
+              vscode-extensions.vadimcn.vscode-lldb
               rnix-lsp
               rust-analyzer
               rust-stable
@@ -46,6 +46,7 @@
             ];
             shellHook = ''
               export PATH=~/.cargo/bin:$PATH
+              export PATH=${vscode-extensions.vadimcn.vscode-lldb}/share/vscode/extensions/vadimcn.vscode-lldb/adapter:$PATH
 
               export RUST_BACKTRACE=1
               export WINIT_UNIX_BACKEND=wayland
