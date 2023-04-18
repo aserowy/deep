@@ -14,7 +14,7 @@ use crate::render::force_field::ForceFieldMaterial;
 use self::{
     module::{
         action::{self, ressource_scanner},
-        aftercast, engine, startup,
+        aftercast, condition, engine, startup,
     },
     power::*,
     settings::*,
@@ -41,11 +41,13 @@ impl Plugin for SubmarinePlugin {
                 (
                     // handle ship mass
                     module::update_mass_by_module_mass,
-                    // handle automatic state transitions
+                    // handle automatic module state transitions
                     action::update_module_channeling_state_transition,
                     aftercast::update_module_aftercast_state_transition,
                     aftercast::update_module_aftercast_state_transition_with_aftercast_component,
                     startup::update_module_startup_state_transition,
+                    // handle automatic condition state transitions
+                    condition::engine_stop::update_engine_stop_condition_by_module_state,
                 )
                     .in_base_set(CoreSet::PreUpdate),
             )
@@ -55,6 +57,8 @@ impl Plugin for SubmarinePlugin {
                 engine::on_key_action_event,
                 engine::on_mouse_position_change,
                 module::on_key_action_event,
+                // handle conditions
+                condition::engine_stop::update_engine_by_engine_stop_condition,
                 // calculate power usage
                 action::set_power_usage_for_channels,
                 engine::set_power_usage_for_engines,

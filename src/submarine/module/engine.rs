@@ -26,6 +26,23 @@ pub struct EngineComponent {
     pub spin_force_max: f32,
 }
 
+impl EngineComponent {
+    pub fn set_stop(&mut self) {
+        self.forward_force = 0.0;
+        self.upward_force = 0.0;
+        self.downward_force = 0.0;
+        self.nose_force = 0.0;
+        self.spin_force = 0.0;
+    }
+
+    pub fn set_stop_with_force(&mut self, force: &mut Mut<ExternalForce>) {
+        self.set_stop();
+
+        force.force = Vec3::ZERO;
+        force.torque = Vec3::ZERO;
+    }
+}
+
 pub fn new_basic() -> (
     ModuleBundle,
     ModuleMassComponent,
@@ -314,24 +331,13 @@ pub fn handle_module_state_for_engines(
         while let Some((mut state, mut engine)) = child_iter.fetch_next() {
             match state.state.status() {
                 ModuleStatus::Passive => (),
-                ModuleStatus::StartingUp => set_stop(&mut engine, &mut force),
+                ModuleStatus::StartingUp => engine.set_stop_with_force(&mut force),
                 ModuleStatus::Active => (),
                 ModuleStatus::Triggered => state.state.next(ModuleStatus::Aftercast),
                 ModuleStatus::Aftercast => state.state.next(ModuleStatus::Active),
-                ModuleStatus::ShuttingDown => set_stop(&mut engine, &mut force),
-                ModuleStatus::Inactive => set_stop(&mut engine, &mut force),
+                ModuleStatus::ShuttingDown => engine.set_stop_with_force(&mut force),
+                ModuleStatus::Inactive => engine.set_stop_with_force(&mut force),
             }
         }
     }
-}
-
-fn set_stop(engine: &mut Mut<EngineComponent>, force: &mut Mut<ExternalForce>) {
-    engine.forward_force = 0.0;
-    engine.upward_force = 0.0;
-    engine.downward_force = 0.0;
-    engine.nose_force = 0.0;
-    engine.spin_force = 0.0;
-
-    force.force = Vec3::ZERO;
-    force.torque = Vec3::ZERO;
 }

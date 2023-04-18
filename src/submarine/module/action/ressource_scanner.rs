@@ -5,7 +5,10 @@ use bevy::{pbr::NotShadowCaster, prelude::*};
 use crate::{
     color,
     render::force_field::ForceFieldMaterial,
-    submarine::module::{aftercast::ModuleAftercastComponent, startup::ModuleStartupComponent, *},
+    submarine::module::{
+        aftercast::ModuleAftercastComponent, condition::engine_stop::EngineStopConditionComponent,
+        startup::ModuleStartupComponent, *,
+    },
 };
 
 use super::ChannelingComponent;
@@ -29,6 +32,7 @@ pub fn new_basic(
     ChannelingComponent,
     ModuleAftercastComponent,
     PowerUsageComponent,
+    EngineStopConditionComponent,
 ) {
     (
         ModuleBundle {
@@ -71,6 +75,7 @@ pub fn new_basic(
         },
         ModuleAftercastComponent::default(),
         PowerUsageComponent::default(),
+        EngineStopConditionComponent::default(),
     )
 }
 
