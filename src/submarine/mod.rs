@@ -51,25 +51,28 @@ impl Plugin for SubmarinePlugin {
                 )
                     .in_base_set(CoreSet::PreUpdate),
             )
-            .add_systems((
-                // handle user input
-                handle_key_presses,
-                engine::on_key_action_event,
-                engine::on_mouse_position_change,
-                module::on_key_action_event,
-                // handle conditions
-                condition::engine_stop::update_engine_by_engine_stop_condition,
-                // calculate power usage
-                action::set_power_usage_for_channels,
-                engine::set_power_usage_for_engines,
-                // handle power management
-                power::update_capacity_by_core,
-                startup::update_power_capacity_by_module_startup,
-                module::update_power_capacity_by_module_power_usage,
-                // handle state
-                action::handle_module_state_for_channels,
-                engine::handle_module_state_for_engines,
-            ))
+            .add_systems(
+                (
+                    // handle user input
+                    handle_key_presses,
+                    engine::on_key_action_event,
+                    engine::on_mouse_position_change,
+                    module::on_key_action_event,
+                    // handle conditions
+                    condition::engine_stop::update_engine_by_engine_stop_condition,
+                    // calculate power usage
+                    action::set_power_usage_for_channels,
+                    engine::set_power_usage_for_engines,
+                    // handle power management
+                    power::update_capacity_by_core,
+                    startup::update_power_capacity_by_module_startup,
+                    module::update_power_capacity_by_module_power_usage,
+                    // handle state
+                    action::handle_module_state_for_channels,
+                    engine::handle_module_state_for_engines,
+                )
+                    .chain(),
+            )
             .add_systems(
                 (
                     // actions
@@ -92,7 +95,6 @@ impl Plugin for SubmarinePlugin {
                     hud::update_thrust_node_on_engine_component_changed,
                     hud::update_velocity_node,
                 )
-                    .chain()
                     .in_base_set(CoreSet::PostUpdate),
             );
     }
