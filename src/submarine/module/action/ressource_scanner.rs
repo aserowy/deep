@@ -6,8 +6,10 @@ use crate::{
     color,
     render::force_field::ForceFieldMaterial,
     submarine::module::{
-        aftercast::ModuleAftercastComponent, condition::engine_stop::EngineStopConditionComponent,
-        startup::ModuleStartupComponent, *,
+        aftercast::ModuleAftercastComponent,
+        condition::{engine_stop::EngineStopConditionComponent, ConditionStateComponent},
+        startup::ModuleStartupComponent,
+        *,
     },
 };
 
@@ -32,6 +34,7 @@ pub fn new_basic(
     ChannelingComponent,
     ModuleAftercastComponent,
     PowerUsageComponent,
+    ConditionStateComponent,
     EngineStopConditionComponent,
 ) {
     (
@@ -75,6 +78,7 @@ pub fn new_basic(
         },
         ModuleAftercastComponent::default(),
         PowerUsageComponent::default(),
+        ConditionStateComponent::default(),
         EngineStopConditionComponent::default(),
     )
 }
