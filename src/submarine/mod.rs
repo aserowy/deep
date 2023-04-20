@@ -9,17 +9,20 @@ use bevy::{
 use bevy_atmosphere::prelude::AtmosphereCamera;
 use bevy_rapier3d::prelude::*;
 
-use crate::render::force_field::ForceFieldMaterial;
+use crate::{render::force_field::ForceFieldMaterial, submarine::height::HeightPropertyComponent};
 
 use self::{
     module::{
         action::{self, ressource_scanner},
-        aftercast, condition, engine, startup,
+        aftercast,
+        condition::{self, update_engine_stop_condition_by_module_state},
+        engine, startup,
     },
     power::*,
     settings::*,
 };
 
+mod height;
 mod hud;
 mod module;
 mod power;
@@ -34,9 +37,16 @@ impl Plugin for SubmarinePlugin {
             .add_event::<KeyActionEvent>()
             .add_system(setup_player_submarine.on_startup())
             .add_system(hud::setup.on_startup().in_base_set(StartupSet::PostStartup))
-            // handle passive effects
-            // TODO: PassiveComponent
             //
+            .add_systems(
+                (
+                    // update properties
+                    height::update_height_property,
+                    // handle passive effects
+                    // TODO: PassiveComponent
+                )
+                    .in_base_set(CoreSet::PreUpdate),
+            )
             .add_systems(
                 (
                     // handle ship mass
@@ -47,7 +57,7 @@ impl Plugin for SubmarinePlugin {
                     aftercast::update_module_aftercast_state_transition_with_aftercast_component,
                     startup::update_module_startup_state_transition,
                     // handle automatic condition state transitions
-                    condition::engine_stop::update_engine_stop_condition_by_module_state,
+                    update_engine_stop_condition_by_module_state,
                 )
                     .in_base_set(CoreSet::PreUpdate),
             )
@@ -87,6 +97,7 @@ impl Plugin for SubmarinePlugin {
                     hud::reset_consumption_ui_component,
                     hud::reset_cooldown_ui_component,
                     hud::update_capacity_node_on_capacitor_componend_changed,
+                    hud::update_height_node,
                     hud::update_modules_by_module_state,
                     hud::update_modules_consumption_by_module_channeling,
                     hud::update_modules_consumption_by_module_startup,
@@ -196,12 +207,19 @@ fn setup_player_submarine(
                     angular_damping: 1.0,
                 },
                 GravityScale(0.0),
-                Collider::cuboid(2.0, 2.0, 5.0),
-                ColliderMassProperties::Mass(6.0 * 1000.0), // kg
+            ),
+            // properties
+            (
                 AdditionalMassProperties::Mass(0.0),
+                HeightPropertyComponent::default(),
             ),
         ))
         .with_children(|builder| {
+            builder.spawn((
+                Collider::cuboid(2.0, 2.0, 5.0),
+                ColliderMassProperties::Mass(6.0 * 1000.0), // kg
+            ));
+
             builder.spawn(ressource_scanner::new_basic(&mut meshes, &mut materials));
             builder.spawn(engine::new_basic());
         });

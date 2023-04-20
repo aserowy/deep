@@ -41,8 +41,8 @@ fn spawn_youbu_bay(
     );
     let mesh_handle = meshes.add(mesh);
 
-    commands
-        .spawn(PbrBundle {
+    commands.spawn((
+        PbrBundle {
             mesh: mesh_handle,
             material: materials.add(StandardMaterial { ..default() }),
             transform: Transform::from_translation(Vec3::new(
@@ -51,9 +51,10 @@ fn spawn_youbu_bay(
                 -256.0,
             )),
             ..default()
-        })
-        .insert(RigidBody::Fixed)
-        .insert(Collider::trimesh(mesh_vertices, mesh_indices));
+        },
+        RigidBody::Fixed,
+        Collider::trimesh(mesh_vertices, mesh_indices),
+    ));
 }
 
 fn generate_mesh_from_base_vectors(

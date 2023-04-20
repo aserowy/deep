@@ -13,6 +13,7 @@ use crate::{
 };
 
 use super::{
+    height::HeightPropertyComponent,
     module::{
         action::ChannelingComponent, aftercast::ModuleAftercastComponent, engine::EngineComponent,
         startup::ModuleStartupComponent, *,
@@ -22,6 +23,9 @@ use super::{
 
 #[derive(Default, Component)]
 pub struct CapacityUiComponent {}
+
+#[derive(Default, Component)]
+pub struct HeightUiComponent {}
 
 #[derive(Component)]
 pub struct ModuleConsumptionUiComponent(Uuid);
@@ -167,6 +171,7 @@ fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
         .with_children(|builder| {
             add_velocity_node(builder, font.clone());
             add_thrust_node(builder, font.clone());
+            add_height_node(builder, font.clone());
         });
 
     builder.spawn(NodeBundle {
@@ -193,6 +198,45 @@ fn add_hud_nodes(builder: &mut ChildBuilder, font: Handle<Font>) {
         .with_children(|builder| {
             add_capacity_node(builder, font);
         });
+}
+
+fn add_height_node(builder: &mut ChildBuilder, font: Handle<Font>) {
+    builder.spawn((
+        TextBundle::from_sections([
+            TextSection::new(
+                "",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::new(
+                " m",
+                TextStyle {
+                    font,
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                },
+            ),
+        ])
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            ..default()
+        }),
+        HeightUiComponent::default(),
+    ));
+}
+
+pub fn update_height_node(
+    mut ui_query: Query<&mut Text, With<HeightUiComponent>>,
+    query: Query<&HeightPropertyComponent, With<Camera>>,
+) {
+    if let Ok(property) = query.get_single() {
+        if let Ok(mut text) = ui_query.get_single_mut() {
+            text.sections[0].value = format!("{:.2}", property.current_height);
+        }
+    }
 }
 
 fn add_capacity_node(builder: &mut ChildBuilder, font: Handle<Font>) {
@@ -289,6 +333,7 @@ fn add_thrust_node(builder: &mut ChildBuilder, font: Handle<Font>) {
         ])
         .with_style(Style {
             align_self: AlignSelf::FlexEnd,
+            margin: UiRect::right(Val::Px(12.0)),
             ..default()
         }),
         ThrustUiComponent::default(),
@@ -343,7 +388,7 @@ fn add_velocity_node(builder: &mut ChildBuilder, font: Handle<Font>) {
         ])
         .with_style(Style {
             align_self: AlignSelf::FlexEnd,
-            margin: UiRect::right(Val::Px(12.0)),
+            margin: UiRect::right(Val::Px(20.0)),
             ..default()
         }),
         VelocityUiComponent::default(),
