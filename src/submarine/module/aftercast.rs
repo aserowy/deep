@@ -31,7 +31,7 @@ pub fn update_module_aftercast_state_transition_with_aftercast_component(
                 state_component.state.next(next_state);
             }
         } else {
-            spinup_component.current_spindown_time = spinup_component.spindown_time.clone();
+            spinup_component.current_spindown_time = spinup_component.spindown_time;
         }
     }
 }

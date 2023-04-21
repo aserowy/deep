@@ -47,7 +47,6 @@ pub fn new_basic(
                 material: materials.add(ForceFieldMaterial {
                     color: color::GRAPE,
                     alpha_mode: AlphaMode::Blend,
-                    ..default()
                 }),
                 transform: Transform::from_scale(Vec3::ZERO),
                 ..default()

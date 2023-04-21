@@ -6,12 +6,11 @@ pub struct HeightPropertyComponent {
     pub current_height: f32,
 }
 
+type TransformHeightPropertyTuple<'a> = (&'a Transform, &'a mut HeightPropertyComponent);
+
 pub fn update_height_property(
     rapier_context: Res<RapierContext>,
-    mut query: Query<
-        (&Transform, &mut HeightPropertyComponent),
-        (Changed<Transform>, With<RigidBody>),
-    >,
+    mut query: Query<TransformHeightPropertyTuple, (Changed<Transform>, With<RigidBody>)>,
 ) {
     let direction = Vec3::new(0.0, -1.0, 0.0);
     let toi_max = 251.0;
