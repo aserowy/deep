@@ -34,6 +34,7 @@ pub fn update_engine_stop_condition_by_module_state(
             ModuleStatus::Passive => condition_state.status = ConditionStatus::Inactive,
             ModuleStatus::StartingUp => condition_state.status = ConditionStatus::Inactive,
             ModuleStatus::Active => condition_state.status = ConditionStatus::Inactive,
+            ModuleStatus::ActiveInvalidTrigger => condition_state.status = ConditionStatus::Inactive,
             ModuleStatus::Triggered => condition_state.status = ConditionStatus::Active,
             ModuleStatus::Aftercast => condition_state.status = ConditionStatus::Active,
             ModuleStatus::ShuttingDown => condition_state.status = ConditionStatus::Inactive,

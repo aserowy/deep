@@ -595,6 +595,7 @@ pub fn update_modules_by_module_state(
                     ModuleStatus::Passive => UNITED_NATIONS_BLUE_25,
                     ModuleStatus::StartingUp => AQUAMARINE_25,
                     ModuleStatus::Active => AQUAMARINE,
+                    ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE_25,
                     ModuleStatus::Triggered => SLATE_BLUE,
                     ModuleStatus::Aftercast => SLATE_BLUE_25,
                     ModuleStatus::ShuttingDown => FRENCH_VIOLET_25,

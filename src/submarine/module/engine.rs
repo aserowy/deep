@@ -95,6 +95,7 @@ pub fn on_key_action_event(
             // NOTE: this handles only one engine currently
             if let Some((state, mut engine)) = child_iter.fetch_next() {
                 if state.state.status() != &ModuleStatus::Active
+                    && state.state.status() != &ModuleStatus::ActiveInvalidTrigger
                     && state.state.status() != &ModuleStatus::Triggered
                     && state.state.status() != &ModuleStatus::Aftercast
                 {
@@ -250,6 +251,7 @@ pub fn on_mouse_position_change(
         // NOTE: this handles only one engine currently
         if let Some((state, mut engine)) = child_iter.fetch_next() {
             if state.state.status() != &ModuleStatus::Active
+                && state.state.status() != &ModuleStatus::ActiveInvalidTrigger
                 && state.state.status() != &ModuleStatus::Triggered
                 && state.state.status() != &ModuleStatus::Aftercast
             {
@@ -333,6 +335,7 @@ pub fn handle_module_state_for_engines(
                 ModuleStatus::Passive => (),
                 ModuleStatus::StartingUp => engine.set_stop_with_force(&mut force),
                 ModuleStatus::Active => (),
+                ModuleStatus::ActiveInvalidTrigger => state.state.next(ModuleStatus::Active),
                 ModuleStatus::Triggered => state.state.next(ModuleStatus::Aftercast),
                 ModuleStatus::Aftercast => state.state.next(ModuleStatus::Active),
                 ModuleStatus::ShuttingDown => engine.set_stop_with_force(&mut force),

@@ -12,6 +12,7 @@ pub mod action;
 pub mod aftercast;
 pub mod condition;
 pub mod engine;
+pub mod requirement;
 pub mod startup;
 
 #[derive(Bundle)]
@@ -56,8 +57,11 @@ impl ModuleState {
         let next = match (&self.status, &future) {
             (ModuleStatus::Passive, ModuleStatus::Passive) => true,
             (ModuleStatus::StartingUp, ModuleStatus::Active) => true,
+            (ModuleStatus::Active, ModuleStatus::ActiveInvalidTrigger) => true,
             (ModuleStatus::Active, ModuleStatus::Triggered) => true,
             (ModuleStatus::Active, ModuleStatus::ShuttingDown) => true,
+            (ModuleStatus::ActiveInvalidTrigger, ModuleStatus::Active) => true,
+            (ModuleStatus::ActiveInvalidTrigger, ModuleStatus::ShuttingDown) => true,
             (ModuleStatus::Triggered, ModuleStatus::Aftercast) => true,
             (ModuleStatus::Aftercast, ModuleStatus::Active) => true,
             (ModuleStatus::Triggered, ModuleStatus::ShuttingDown) => true,
@@ -87,6 +91,7 @@ pub enum ModuleStatus {
     Passive,
     StartingUp,
     Active,
+    ActiveInvalidTrigger,
     Triggered,
     Aftercast,
     ShuttingDown,
@@ -99,6 +104,7 @@ impl Display for ModuleStatus {
             ModuleStatus::Passive => "Passive",
             ModuleStatus::StartingUp => "StartingUp",
             ModuleStatus::Active => "Active",
+            ModuleStatus::ActiveInvalidTrigger => "ActiveInvalidTrigger",
             ModuleStatus::Triggered => "Triggered",
             ModuleStatus::Aftercast => "Aftercast",
             ModuleStatus::ShuttingDown => "ShuttingDown",

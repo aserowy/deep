@@ -9,15 +9,11 @@ use super::{ConditionStateComponent, ConditionStatus};
 pub struct EngineStopConditionComponent {}
 
 pub fn update_engine_by_engine_stop_condition(
-    query: Query<(
-        &Parent,
-        &ConditionStateComponent,
-        &EngineStopConditionComponent,
-    )>,
+    query: Query<(&Parent, &ConditionStateComponent), With<EngineStopConditionComponent>>,
     mut children_query: Query<(&mut ExternalForce, &Children)>,
     mut engine_query: Query<&mut EngineComponent>,
 ) {
-    for (parent, state, condition) in query.iter() {
+    for (parent, state) in query.iter() {
         if state.status == ConditionStatus::Inactive {
             continue;
         }

@@ -18,7 +18,7 @@ fn main() {
             ..default()
         }))
         // debug
-        .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(EditorPlugin::default())
         .add_system(bevy::window::close_on_esc)
         // game

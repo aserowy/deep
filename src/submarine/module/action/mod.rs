@@ -51,6 +51,7 @@ pub fn handle_module_state_for_channels(
             ModuleStatus::Passive => (),
             ModuleStatus::StartingUp => channel.current_duration = None,
             ModuleStatus::Active => channel.current_duration = None,
+            ModuleStatus::ActiveInvalidTrigger => channel.current_duration = None,
             ModuleStatus::Triggered => {
                 if channel.current_duration.is_none() {
                     channel.current_duration = Some(0.0);

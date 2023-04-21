@@ -8,6 +8,7 @@ use crate::{
     submarine::module::{
         aftercast::ModuleAftercastComponent,
         condition::{engine_stop::EngineStopConditionComponent, ConditionStateComponent},
+        requirement::{MaximumHeightRequirementComponent, RequirementStateComponent},
         startup::ModuleStartupComponent,
         *,
     },
@@ -22,65 +23,63 @@ pub struct ExpandingSphereEffectComponent {
 }
 
 pub fn new_basic(
+    builder: &mut ChildBuilder,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ForceFieldMaterial>>,
-) -> (
-    ModuleBundle,
-    ModuleMassComponent,
-    MaterialMeshBundle<ForceFieldMaterial>,
-    NotShadowCaster,
-    ExpandingSphereEffectComponent,
-    ModuleStartupComponent,
-    ChannelingComponent,
-    ModuleAftercastComponent,
-    PowerUsageComponent,
-    ConditionStateComponent,
-    EngineStopConditionComponent,
 ) {
-    (
-        ModuleBundle {
-            details: ModuleDetailsComponent {
-                id: Uuid::new_v4(),
-                icon: "󰐷".into(),
+    builder
+        .spawn((
+            ModuleBundle {
+                details: ModuleDetailsComponent {
+                    id: Uuid::new_v4(),
+                    icon: "󰐷".into(),
+                },
+                state: ModuleStateComponent {
+                    state: ModuleState::new(),
+                },
             },
-            state: ModuleStateComponent {
-                state: ModuleState::new(),
-            },
-        },
-        ModuleMassComponent {
-            mass: 2.5 * 1000.0,
-            ..default()
-        },
-        MaterialMeshBundle {
-            mesh: meshes.add(shape::UVSphere::default().into()),
-            material: materials.add(ForceFieldMaterial {
-                color: color::GRAPE,
-                alpha_mode: AlphaMode::Blend,
+            ModuleMassComponent {
+                mass: 2.5 * 1000.0,
                 ..default()
-            }),
-            transform: Transform::from_scale(Vec3::ZERO),
-            ..default()
-        },
-        NotShadowCaster,
-        ExpandingSphereEffectComponent {
-            expanse_max: 42.0,
-            cleanup_in_seconds: 4.0,
-        },
-        ModuleStartupComponent {
-            watt: 1500.0 * 1000.0,
-            watt_hour: 1500.0,
-            ..default()
-        },
-        ChannelingComponent {
-            duration: 8.0,
-            watt_per_second: 450.0 * 1000.0,
-            ..default()
-        },
-        ModuleAftercastComponent::default(),
-        PowerUsageComponent::default(),
-        ConditionStateComponent::default(),
-        EngineStopConditionComponent::default(),
-    )
+            },
+            MaterialMeshBundle {
+                mesh: meshes.add(shape::UVSphere::default().into()),
+                material: materials.add(ForceFieldMaterial {
+                    color: color::GRAPE,
+                    alpha_mode: AlphaMode::Blend,
+                    ..default()
+                }),
+                transform: Transform::from_scale(Vec3::ZERO),
+                ..default()
+            },
+            NotShadowCaster,
+            ExpandingSphereEffectComponent {
+                expanse_max: 42.0,
+                cleanup_in_seconds: 4.0,
+            },
+            ModuleStartupComponent {
+                watt: 1500.0 * 1000.0,
+                watt_hour: 1500.0,
+                ..default()
+            },
+            ChannelingComponent {
+                duration: 8.0,
+                watt_per_second: 450.0 * 1000.0,
+                ..default()
+            },
+            ModuleAftercastComponent::default(),
+            PowerUsageComponent::default(),
+            ConditionStateComponent::default(),
+            EngineStopConditionComponent::default(),
+        ))
+        .with_children(|child_builer| {
+            child_builer.spawn((
+                RequirementStateComponent::default(),
+                MaximumHeightRequirementComponent {
+                    maximum_height: 5.0,
+                },
+            ));
+        });
 }
 
 pub fn activate(

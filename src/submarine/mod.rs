@@ -16,7 +16,7 @@ use self::{
         action::{self, ressource_scanner},
         aftercast,
         condition::{self, update_engine_stop_condition_by_module_state},
-        engine, startup,
+        engine, requirement, startup,
     },
     power::*,
     settings::*,
@@ -59,6 +59,14 @@ impl Plugin for SubmarinePlugin {
                     // handle automatic condition state transitions
                     update_engine_stop_condition_by_module_state,
                 )
+                    .in_base_set(CoreSet::PreUpdate),
+            )
+            .add_systems(
+                (
+                    requirement::handle_maximum_height_requirement,
+                    requirement::set_module_state_by_requirement_states,
+                )
+                    .chain()
                     .in_base_set(CoreSet::PreUpdate),
             )
             .add_systems(
@@ -220,7 +228,7 @@ fn setup_player_submarine(
                 ColliderMassProperties::Mass(6.0 * 1000.0), // kg
             ));
 
-            builder.spawn(ressource_scanner::new_basic(&mut meshes, &mut materials));
+            ressource_scanner::new_basic(builder, &mut meshes, &mut materials);
             builder.spawn(engine::new_basic());
         });
 }
