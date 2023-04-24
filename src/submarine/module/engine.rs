@@ -43,18 +43,12 @@ impl EngineComponent {
     }
 }
 
-pub fn new_basic() -> (
-    ModuleBundle,
-    ModuleMassComponent,
-    EngineComponent,
-    ModuleStartupComponent,
-    PowerUsageComponent,
-) {
-    (
+pub fn new_basic(asset_server: &Res<AssetServer>, builder: &mut ChildBuilder) {
+    builder.spawn((
         ModuleBundle {
             details: ModuleDetailsComponent {
                 id: Uuid::new_v4(),
-                icon: "󰇺".into(),
+                icon: asset_server.load("submarine/module/afterburn_55px.png"),
             },
             state: ModuleStateComponent {
                 state: ModuleState::new(),
@@ -77,7 +71,7 @@ pub fn new_basic() -> (
             ..default()
         },
         PowerUsageComponent::default(),
-    )
+    ));
 }
 
 pub fn on_key_action_event(

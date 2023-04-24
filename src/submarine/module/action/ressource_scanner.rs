@@ -23,6 +23,7 @@ pub struct ExpandingSphereEffectComponent {
 }
 
 pub fn new_basic(
+    asset_server: &Res<AssetServer>,
     builder: &mut ChildBuilder,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ForceFieldMaterial>>,
@@ -32,7 +33,7 @@ pub fn new_basic(
             ModuleBundle {
                 details: ModuleDetailsComponent {
                     id: Uuid::new_v4(),
-                    icon: "󰐷".into(),
+                    icon: asset_server.load("submarine/module/radar-sweep_55px.png"),
                 },
                 state: ModuleStateComponent {
                     state: ModuleState::new(),

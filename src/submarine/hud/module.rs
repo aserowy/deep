@@ -30,7 +30,7 @@ pub fn setup(
                     position_type: PositionType::Absolute,
                     size: Size::all(Val::Percent(100.0)),
                     padding: UiRect::bottom(Val::Px(42.0)),
-                    gap: Size::all(Val::Px(5.0)),
+                    gap: Size::all(Val::Px(10.0)),
                     ..default()
                 },
                 ..default()
@@ -61,48 +61,18 @@ fn add_module_to_module_nodes(
     builder
         .spawn(NodeBundle {
             style: Style {
-                size: Size::all(Val::Px(50.0)),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                align_content: AlignContent::Center,
+                size: Size {
+                    width: Val::Px(55.0),
+                    height: Val::Px(80.0),
+                },
                 ..default()
             },
             ..default()
         })
         .with_children(|builder| {
-            builder.spawn((
-                TextBundle::from_sections([TextSection::new(
-                    details.icon.clone(),
-                    TextStyle {
-                        font: font.clone(),
-                        font_size: 32.0,
-                        color: Color::WHITE,
-                    },
-                )])
-                .with_style(Style {
-                    position_type: PositionType::Absolute,
-                    position: UiRect::left(Val::Px(9.0)),
-                    ..default()
-                }),
-                ModuleIconUiComponent(details.id),
-            ));
-
-            builder.spawn((
-                TextBundle::from_sections([TextSection::new(
-                    "0",
-                    TextStyle {
-                        font: font_bold,
-                        font_size: 20.0,
-                        color: Color::rgba(1.0, 1.0, 1.0, 0.0),
-                    },
-                )])
-                .with_style(Style {
-                    position_type: PositionType::Absolute,
-                    position: UiRect::top(Val::Px(6.0)),
-                    ..default()
-                }),
-                ModuleCooldownUiComponent(details.id),
-            ));
-
             builder.spawn((
                 TextBundle::from_sections([TextSection::new(
                     "0",
@@ -111,14 +81,50 @@ fn add_module_to_module_nodes(
                         font_size: 15.0,
                         color: Color::rgba(1.0, 1.0, 1.0, 0.0),
                     },
-                )])
-                .with_style(Style {
-                    position_type: PositionType::Absolute,
-                    position: UiRect::top(Val::Px(34.0)),
-                    ..default()
-                }),
+                )]),
                 ModuleConsumptionUiComponent(details.id),
             ));
+
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        size: Size::all(Val::Px(55.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|builder| {
+                    builder.spawn((
+                        ImageBundle {
+                            background_color: FRENCH_VIOLET.into(),
+                            image: UiImage {
+                                texture: details.icon.clone(),
+                                ..default()
+                            },
+                            style: Style {
+                                size: Size::all(Val::Percent(100.0)),
+                                position_type: PositionType::Absolute,
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        ModuleIconUiComponent(details.id),
+                    ));
+
+                    builder.spawn((
+                        TextBundle::from_sections([TextSection::new(
+                            "0",
+                            TextStyle {
+                                font: font_bold,
+                                font_size: 28.0,
+                                color: Color::rgba(1.0, 1.0, 1.0, 0.0),
+                            },
+                        )]),
+                        ModuleCooldownUiComponent(details.id),
+                    ));
+                });
         });
 }
 
@@ -228,24 +234,26 @@ pub fn update_modules_cooldown_by_module_channeling(
 pub fn update_modules_by_module_state(
     camera_query: Query<&Children, With<Camera>>,
     child_query: Query<(&ModuleDetailsComponent, &ModuleStateComponent)>,
-    mut icon_query: Query<(&mut Text, &ModuleIconUiComponent)>,
+    mut bg_color_query: Query<(&mut BackgroundColor, &ModuleIconUiComponent)>,
 ) {
     if let Ok(children) = camera_query.get_single() {
         let mut child_iter = child_query.iter_many(children);
-        let icons = icon_query.iter_mut();
+        let bg_colors = bg_color_query.iter_mut();
 
-        for (mut icon, component) in icons {
+        for (mut background_color, component) in bg_colors {
             if let Some((_, state)) = child_iter.find(|cmp| cmp.0.id == component.0) {
-                icon.sections[0].style.color = match state.state.status() {
-                    ModuleStatus::Passive => UNITED_NATIONS_BLUE_25,
-                    ModuleStatus::StartingUp => AQUAMARINE_25,
+                let color = match state.state.status() {
+                    ModuleStatus::Passive => UNITED_NATIONS_BLUE,
+                    ModuleStatus::StartingUp => AQUAMARINE_50,
                     ModuleStatus::Active => AQUAMARINE,
-                    ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE_25,
+                    ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE,
                     ModuleStatus::Triggered => SLATE_BLUE,
-                    ModuleStatus::Aftercast => SLATE_BLUE_25,
-                    ModuleStatus::ShuttingDown => FRENCH_VIOLET_25,
+                    ModuleStatus::Aftercast => SLATE_BLUE_50,
+                    ModuleStatus::ShuttingDown => FRENCH_VIOLET_50,
                     ModuleStatus::Inactive => FRENCH_VIOLET,
-                }
+                };
+
+                *background_color = color.into();
             }
         }
     }

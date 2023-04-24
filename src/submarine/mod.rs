@@ -121,6 +121,7 @@ impl Plugin for SubmarinePlugin {
 }
 
 fn setup_player_submarine(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ForceFieldMaterial>>,
@@ -229,7 +230,7 @@ fn setup_player_submarine(
                 ColliderMassProperties::Mass(6.0 * 1000.0), // kg
             ));
 
-            ressource_scanner::new_basic(builder, &mut meshes, &mut materials);
-            builder.spawn(engine::new_basic());
+            ressource_scanner::new_basic(&asset_server, builder, &mut meshes, &mut materials);
+            engine::new_basic(&asset_server, builder);
         });
 }

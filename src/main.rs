@@ -20,7 +20,6 @@ fn main() {
         // debug
         // .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(EditorPlugin::default())
-        .add_system(bevy::window::close_on_esc)
         // game
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(CustomRenderPlugin::default())

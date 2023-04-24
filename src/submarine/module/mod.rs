@@ -24,7 +24,7 @@ pub struct ModuleBundle {
 #[derive(Component)]
 pub struct ModuleDetailsComponent {
     pub id: Uuid,
-    pub icon: String,
+    pub icon: Handle<Image>,
 }
 
 #[derive(Component, Default)]
