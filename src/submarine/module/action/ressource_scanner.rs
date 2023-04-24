@@ -46,7 +46,7 @@ pub fn new_basic(
             MaterialMeshBundle {
                 mesh: meshes.add(shape::UVSphere::default().into()),
                 material: materials.add(ForceFieldMaterial {
-                    color: color::GRAPE,
+                    color: color::GRAPE_50,
                     alpha_mode: AlphaMode::Blend,
                 }),
                 transform: Transform::from_scale(Vec3::ZERO),
@@ -69,10 +69,13 @@ pub fn new_basic(
             },
             ModuleAftercastComponent::default(),
             PowerUsageComponent::default(),
-            ConditionStateComponent::default(),
-            EngineStopConditionComponent::default(),
         ))
         .with_children(|child_builer| {
+            child_builer.spawn((
+                ConditionStateComponent::default(),
+                EngineStopConditionComponent::default(),
+            ));
+
             child_builer.spawn((
                 RequirementStateComponent::default(),
                 MaximumHeightRequirementComponent {

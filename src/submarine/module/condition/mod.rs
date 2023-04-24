@@ -24,21 +24,24 @@ pub enum ConditionStatus {
 }
 
 pub fn update_engine_stop_condition_by_module_state(
-    mut query: Query<
-        (&ModuleStateComponent, &mut ConditionStateComponent),
-        Changed<ModuleStateComponent>,
-    >,
+    query: Query<(&ModuleStateComponent, &Children), Changed<ModuleStateComponent>>,
+    mut condition_query: Query<&mut ConditionStateComponent>,
 ) {
-    for (state, mut condition_state) in query.iter_mut() {
-        match state.state.status() {
-            ModuleStatus::Passive => condition_state.status = ConditionStatus::Inactive,
-            ModuleStatus::StartingUp => condition_state.status = ConditionStatus::Inactive,
-            ModuleStatus::Active => condition_state.status = ConditionStatus::Inactive,
-            ModuleStatus::ActiveInvalidTrigger => condition_state.status = ConditionStatus::Inactive,
-            ModuleStatus::Triggered => condition_state.status = ConditionStatus::Active,
-            ModuleStatus::Aftercast => condition_state.status = ConditionStatus::Active,
-            ModuleStatus::ShuttingDown => condition_state.status = ConditionStatus::Inactive,
-            ModuleStatus::Inactive => condition_state.status = ConditionStatus::Inactive,
+    for (state, children) in query.iter() {
+        let mut condition_iter = condition_query.iter_many_mut(children);
+        while let Some(mut condition_state) = condition_iter.fetch_next() {
+            let status = match state.state.status() {
+                ModuleStatus::Passive => ConditionStatus::Inactive,
+                ModuleStatus::StartingUp => ConditionStatus::Inactive,
+                ModuleStatus::Active => ConditionStatus::Inactive,
+                ModuleStatus::ActiveInvalidTrigger => ConditionStatus::Inactive,
+                ModuleStatus::Triggered => ConditionStatus::Active,
+                ModuleStatus::Aftercast => ConditionStatus::Active,
+                ModuleStatus::ShuttingDown => ConditionStatus::Inactive,
+                ModuleStatus::Inactive => ConditionStatus::Inactive,
+            };
+
+            condition_state.status = status;
         }
     }
 }
