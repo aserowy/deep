@@ -7,8 +7,8 @@ use crate::{
     render::force_field::ForceFieldMaterial,
     submarine::module::{
         aftercast::ModuleAftercastComponent,
-        condition::{engine_stop::EngineStopConditionComponent, ConditionStateComponent},
-        requirement::{MaximumHeightRequirementComponent, RequirementStateComponent},
+        condition::engine_stop::EngineStopConditionComponent,
+        requirement::{MaximumHeightRequirementComponent, RequirementComponent},
         startup::ModuleStartupComponent,
         *,
     },
@@ -71,13 +71,10 @@ pub fn new_basic(
             PowerUsageComponent::default(),
         ))
         .with_children(|child_builer| {
-            child_builer.spawn((
-                ConditionStateComponent::default(),
-                EngineStopConditionComponent::default(),
-            ));
+            EngineStopConditionComponent::new(asset_server, child_builer);
 
             child_builer.spawn((
-                RequirementStateComponent::default(),
+                RequirementComponent::default(),
                 MaximumHeightRequirementComponent {
                     maximum_height: 5.0,
                 },

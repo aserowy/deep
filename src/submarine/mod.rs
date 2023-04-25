@@ -102,6 +102,7 @@ impl Plugin for SubmarinePlugin {
             .add_systems(
                 (
                     // ui
+                    hud::condition::update_condition_row_ui_component,
                     hud::information::update_capacity_node_on_capacitor_componend_changed,
                     hud::information::update_height_node,
                     hud::information::update_thrust_node_on_engine_component_changed,

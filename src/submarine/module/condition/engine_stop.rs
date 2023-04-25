@@ -3,13 +3,22 @@ use bevy_rapier3d::prelude::ExternalForce;
 
 use crate::submarine::module::engine::EngineComponent;
 
-use super::{ConditionStateComponent, ConditionStatus};
+use super::{ConditionComponent, ConditionStatus};
 
 #[derive(Clone, Component, Default)]
 pub struct EngineStopConditionComponent {}
 
+impl EngineStopConditionComponent {
+    pub fn new(asset_server: &Res<AssetServer>, builder: &mut ChildBuilder) {
+        builder.spawn((
+            ConditionComponent::new(asset_server.load("submarine/condition/stop-sign_33px.png")),
+            EngineStopConditionComponent::default(),
+        ));
+    }
+}
+
 pub fn update_engine_by_engine_stop_condition(
-    query: Query<(&Parent, &ConditionStateComponent), With<EngineStopConditionComponent>>,
+    query: Query<(&Parent, &ConditionComponent), With<EngineStopConditionComponent>>,
     parent_query: Query<&Parent>,
     mut force_query: Query<(&mut ExternalForce, &Children)>,
     mut engine_query: Query<&mut EngineComponent>,

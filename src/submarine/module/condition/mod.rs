@@ -1,18 +1,23 @@
 use bevy::prelude::*;
+use uuid::Uuid;
 
 use super::{ModuleStateComponent, ModuleStatus};
 
 pub mod engine_stop;
 
 #[derive(Clone, Component, Debug)]
-pub struct ConditionStateComponent {
+pub struct ConditionComponent {
+    pub id: Uuid,
     pub status: ConditionStatus,
+    pub icon: Handle<Image>,
 }
 
-impl Default for ConditionStateComponent {
-    fn default() -> Self {
+impl ConditionComponent {
+    fn new(image: Handle<Image>) -> Self {
         Self {
+            id: Uuid::new_v4(),
             status: ConditionStatus::Inactive,
+            icon: image,
         }
     }
 }
@@ -25,7 +30,7 @@ pub enum ConditionStatus {
 
 pub fn update_engine_stop_condition_by_module_state(
     query: Query<(&ModuleStateComponent, &Children), Changed<ModuleStateComponent>>,
-    mut condition_query: Query<&mut ConditionStateComponent>,
+    mut condition_query: Query<&mut ConditionComponent>,
 ) {
     for (state, children) in query.iter() {
         let mut condition_iter = condition_query.iter_many_mut(children);

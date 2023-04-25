@@ -5,11 +5,11 @@ use crate::submarine::height::HeightPropertyComponent;
 use super::{ModuleStateComponent, ModuleStatus};
 
 #[derive(Clone, Component, Debug)]
-pub struct RequirementStateComponent {
+pub struct RequirementComponent {
     pub status: RequirementStatus,
 }
 
-impl Default for RequirementStateComponent {
+impl Default for RequirementComponent {
     fn default() -> Self {
         Self {
             status: RequirementStatus::Fulfilled,
@@ -30,7 +30,7 @@ pub struct MaximumHeightRequirementComponent {
 
 pub fn set_module_state_by_requirement_states(
     mut query: Query<(&mut ModuleStateComponent, &Children)>,
-    requirement_query: Query<&RequirementStateComponent>,
+    requirement_query: Query<&RequirementComponent>,
 ) {
     for (mut state, children) in query.iter_mut() {
         if state.state.status() != &ModuleStatus::Active
@@ -57,7 +57,7 @@ pub fn set_module_state_by_requirement_states(
 pub fn handle_maximum_height_requirement(
     mut query: Query<(
         &Parent,
-        &mut RequirementStateComponent,
+        &mut RequirementComponent,
         &MaximumHeightRequirementComponent,
     )>,
     parent_query: Query<&Parent>,
