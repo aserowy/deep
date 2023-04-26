@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use uuid::Uuid;
 
 use crate::submarine::height::HeightPropertyComponent;
 
@@ -6,13 +7,17 @@ use super::{ModuleStateComponent, ModuleStatus};
 
 #[derive(Clone, Component, Debug)]
 pub struct RequirementComponent {
+    pub id: Uuid,
     pub status: RequirementStatus,
+    pub icon: Handle<Image>,
 }
 
-impl Default for RequirementComponent {
-    fn default() -> Self {
+impl RequirementComponent {
+    fn new(image: Handle<Image>) -> Self {
         Self {
+            id: Uuid::new_v4(),
             status: RequirementStatus::Fulfilled,
+            icon: image,
         }
     }
 }
@@ -26,6 +31,17 @@ pub enum RequirementStatus {
 #[derive(Clone, Component)]
 pub struct MaximumHeightRequirementComponent {
     pub maximum_height: f32,
+}
+
+impl MaximumHeightRequirementComponent {
+    pub fn new(asset_server: &Res<AssetServer>, builder: &mut ChildBuilder, height: f32) {
+        builder.spawn((
+            RequirementComponent::new(asset_server.load("submarine/module/save-arrow.png")),
+            MaximumHeightRequirementComponent {
+                maximum_height: height,
+            },
+        ));
+    }
 }
 
 pub fn set_module_state_by_requirement_states(

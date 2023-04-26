@@ -114,6 +114,7 @@ impl Plugin for SubmarinePlugin {
                     hud::module::update_modules_consumption_by_module_startup,
                     hud::module::update_modules_cooldown_by_module_aftercast,
                     hud::module::update_modules_cooldown_by_module_channeling,
+                    hud::module::update_modules_requirement_by_state,
                 )
                     .chain()
                     .in_base_set(CoreSet::PostUpdate),

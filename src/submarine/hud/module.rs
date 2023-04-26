@@ -5,8 +5,8 @@ use crate::{
     color::*,
     submarine::module::{
         action::ChannelingComponent, aftercast::ModuleAftercastComponent,
-        startup::ModuleStartupComponent, ModuleDetailsComponent, ModuleStateComponent,
-        ModuleStatus,
+        requirement::{RequirementComponent, RequirementStatus}, startup::ModuleStartupComponent, ModuleDetailsComponent,
+        ModuleStateComponent, ModuleStatus,
     },
 };
 
@@ -14,10 +14,10 @@ pub fn setup(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     query: Query<&Children, With<Camera>>,
-    child_query: Query<&ModuleDetailsComponent>,
+    module_query: Query<(&ModuleDetailsComponent, Option<&Children>)>,
+    requirements_query: Query<&RequirementComponent>,
 ) {
     if let Ok(children) = query.get_single() {
-        let mut child_iter = child_query.iter_many(children);
         let font = asset_server.load("fonts/monofur.ttf");
         let font_bold = asset_server.load("fonts/monofur_bold.ttf");
 
@@ -36,8 +36,24 @@ pub fn setup(
                 ..default()
             })
             .with_children(|builder| {
-                while let Some(details) = child_iter.fetch_next() {
-                    add_module_to_module_nodes(builder, details, font.clone(), font_bold.clone());
+                info!("Module ui building.");
+
+                for (details, details_children) in module_query.iter_many(children) {
+                    info!("Module ui with id {}.", details.id);
+
+                    let requirements = if let Some(details_children) = details_children {
+                        requirements_query.iter_many(details_children).collect()
+                    } else {
+                        vec![]
+                    };
+
+                    add_module_to_module_nodes(
+                        builder,
+                        details,
+                        requirements,
+                        font.clone(),
+                        font_bold.clone(),
+                    );
                 }
             });
     }
@@ -52,9 +68,13 @@ pub struct ModuleCooldownUiComponent(Uuid);
 #[derive(Component)]
 pub struct ModuleIconUiComponent(Uuid);
 
+#[derive(Component)]
+pub struct ModuleRequirementUiComponent(Uuid);
+
 fn add_module_to_module_nodes(
     builder: &mut ChildBuilder,
     details: &ModuleDetailsComponent,
+    requirements: Vec<&RequirementComponent>,
     font: Handle<Font>,
     font_bold: Handle<Font>,
 ) {
@@ -62,11 +82,11 @@ fn add_module_to_module_nodes(
         .spawn(NodeBundle {
             style: Style {
                 flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
+                align_items: AlignItems::FlexStart,
                 justify_content: JustifyContent::Center,
                 size: Size {
                     width: Val::Px(55.0),
-                    height: Val::Px(80.0),
+                    height: Val::Px(120.0),
                 },
                 ..default()
             },
@@ -81,7 +101,11 @@ fn add_module_to_module_nodes(
                         font_size: 15.0,
                         color: Color::rgba(1.0, 1.0, 1.0, 0.0),
                     },
-                )]),
+                )])
+                .with_style(Style {
+                    margin: UiRect::bottom(Val::Px(8.0)),
+                    ..default()
+                }),
                 ModuleConsumptionUiComponent(details.id),
             ));
 
@@ -91,6 +115,7 @@ fn add_module_to_module_nodes(
                         size: Size::all(Val::Px(55.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(6.0)),
                         ..default()
                     },
                     ..default()
@@ -124,6 +149,42 @@ fn add_module_to_module_nodes(
                         )]),
                         ModuleCooldownUiComponent(details.id),
                     ));
+                });
+
+            builder
+                .spawn(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        size: Size::height(Val::Px(18.0)),
+                        margin: UiRect::bottom(Val::Px(8.0)),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|builder| {
+                    info!("RequirementComponents building.");
+
+                    for requirement in requirements {
+                        info!("RequirementComponent with id {}.", requirement.id);
+
+                        builder.spawn((
+                            ImageBundle {
+                                background_color: FRENCH_VIOLET.into(),
+                                image: UiImage {
+                                    texture: requirement.icon.clone(),
+                                    ..default()
+                                },
+                                style: Style {
+                                    size: Size::all(Val::Px(18.0)),
+                                    ..default()
+                                },
+                                ..default()
+                            },
+                            ModuleRequirementUiComponent(requirement.id),
+                        ));
+                    }
                 });
         });
 }
@@ -238,9 +299,7 @@ pub fn update_modules_by_module_state(
 ) {
     if let Ok(children) = camera_query.get_single() {
         let mut child_iter = child_query.iter_many(children);
-        let bg_colors = bg_color_query.iter_mut();
-
-        for (mut background_color, component) in bg_colors {
+        for (mut background_color, component) in bg_color_query.iter_mut() {
             if let Some((_, state)) = child_iter.find(|cmp| cmp.0.id == component.0) {
                 let color = match state.state.status() {
                     ModuleStatus::Passive => UNITED_NATIONS_BLUE,
@@ -255,6 +314,31 @@ pub fn update_modules_by_module_state(
 
                 *background_color = color.into();
             }
+        }
+    }
+}
+
+pub fn update_modules_requirement_by_state(
+    requirements_query: Query<&RequirementComponent>,
+    mut ui_query: Query<(&mut BackgroundColor, &ModuleRequirementUiComponent)>,
+) {
+    let requirements: Vec<&RequirementComponent> = requirements_query.iter().collect();
+    for (mut background_color, component) in ui_query.iter_mut() {
+        if let Some(requirement) = requirements.iter().find(|rqrmnt| component.0 == rqrmnt.id) {
+                let color = match requirement.status{
+                    RequirementStatus::Fulfilled => UNITED_NATIONS_BLUE,
+                    RequirementStatus::Violated => FRENCH_VIOLET,
+                    // ModuleStatus::Passive => ,
+                    // ModuleStatus::StartingUp => AQUAMARINE_50,
+                    // ModuleStatus::Active => AQUAMARINE,
+                    // ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE,
+                    // ModuleStatus::Triggered => SLATE_BLUE,
+                    // ModuleStatus::Aftercast => SLATE_BLUE_50,
+                    // ModuleStatus::ShuttingDown => FRENCH_VIOLET_50,
+                    // ModuleStatus::Inactive => FRENCH_VIOLET,
+                };
+
+                *background_color = color.into();
         }
     }
 }
