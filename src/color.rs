@@ -230,3 +230,24 @@ pub const AQUAMARINE_25: Color = Color::Hsla {
     lightness: 0.75,
     alpha: 0.25,
 };
+#[allow(dead_code)]
+pub const GREEN: Color = Color::Hsla {
+    hue: 133.0,
+    saturation: 1.0,
+    lightness: 0.73,
+    alpha: 1.0,
+};
+#[allow(dead_code)]
+pub const RED: Color = Color::Hsla {
+    hue: 1.0,
+    saturation: 1.0,
+    lightness: 0.70,
+    alpha: 1.0,
+};
+#[allow(dead_code)]
+pub const GRAY: Color = Color::Hsla {
+    hue: 1.0,
+    saturation: 0.0,
+    lightness: 0.80,
+    alpha: 1.0,
+};

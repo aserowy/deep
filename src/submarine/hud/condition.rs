@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use uuid::Uuid;
 
 use crate::{
-    color::FRENCH_VIOLET,
+    color::RED,
     submarine::module::{
         condition::{ConditionComponent, ConditionStatus},
         ModuleDetailsComponent,
@@ -83,7 +83,7 @@ fn spawn_condition_entry(
     let child = commands
         .spawn((
             ImageBundle {
-                background_color: FRENCH_VIOLET.into(),
+                background_color: RED.into(),
                 image: UiImage {
                     texture: condition.icon.clone(),
                     ..default()

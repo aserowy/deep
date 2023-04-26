@@ -302,14 +302,14 @@ pub fn update_modules_by_module_state(
         for (mut background_color, component) in bg_color_query.iter_mut() {
             if let Some((_, state)) = child_iter.find(|cmp| cmp.0.id == component.0) {
                 let color = match state.state.status() {
-                    ModuleStatus::Passive => UNITED_NATIONS_BLUE,
-                    ModuleStatus::StartingUp => AQUAMARINE_50,
-                    ModuleStatus::Active => AQUAMARINE,
-                    ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE,
-                    ModuleStatus::Triggered => SLATE_BLUE,
-                    ModuleStatus::Aftercast => SLATE_BLUE_50,
-                    ModuleStatus::ShuttingDown => FRENCH_VIOLET_50,
-                    ModuleStatus::Inactive => FRENCH_VIOLET,
+                    ModuleStatus::Passive => Color::WHITE,
+                    ModuleStatus::StartingUp => TIFFANY_BLUE,
+                    ModuleStatus::Active => GREEN,
+                    ModuleStatus::ActiveInvalidTrigger => RED,
+                    ModuleStatus::Triggered => AQUAMARINE,
+                    ModuleStatus::Aftercast => AQUAMARINE_50,
+                    ModuleStatus::ShuttingDown => TIFFANY_BLUE_50,
+                    ModuleStatus::Inactive => FRENCH_VIOLET_50,
                 };
 
                 *background_color = color.into();
@@ -326,16 +326,8 @@ pub fn update_modules_requirement_by_state(
     for (mut background_color, component) in ui_query.iter_mut() {
         if let Some(requirement) = requirements.iter().find(|rqrmnt| component.0 == rqrmnt.id) {
                 let color = match requirement.status{
-                    RequirementStatus::Fulfilled => UNITED_NATIONS_BLUE,
-                    RequirementStatus::Violated => FRENCH_VIOLET,
-                    // ModuleStatus::Passive => ,
-                    // ModuleStatus::StartingUp => AQUAMARINE_50,
-                    // ModuleStatus::Active => AQUAMARINE,
-                    // ModuleStatus::ActiveInvalidTrigger => TIFFANY_BLUE,
-                    // ModuleStatus::Triggered => SLATE_BLUE,
-                    // ModuleStatus::Aftercast => SLATE_BLUE_50,
-                    // ModuleStatus::ShuttingDown => FRENCH_VIOLET_50,
-                    // ModuleStatus::Inactive => FRENCH_VIOLET,
+                    RequirementStatus::Fulfilled => GREEN,
+                    RequirementStatus::Violated => RED,
                 };
 
                 *background_color = color.into();
