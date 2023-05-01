@@ -1614,10 +1614,25 @@ dependencies = [
  "bevy_editor_pls",
  "bevy_rapier3d",
  "colorgrad",
- "image",
- "nalgebra",
+ "deep-rtin",
+ "deep-voronoi",
  "rand",
  "uuid",
+]
+
+[[package]]
+name = "deep-rtin"
+version = "0.0.1"
+dependencies = [
+ "image",
+ "nalgebra",
+]
+
+[[package]]
+name = "deep-voronoi"
+version = "0.0.1"
+dependencies = [
+ "rand",
 ]
 
 [[package]]

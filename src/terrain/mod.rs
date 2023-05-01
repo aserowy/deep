@@ -18,11 +18,11 @@ pub struct TerrainPlugin {}
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(SkyPlugin::default())
-            .add_system(spawn_youbu_bay.on_startup());
+            .add_system(spawn_terrain.on_startup());
     }
 }
 
-fn spawn_youbu_bay(
+fn spawn_terrain(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

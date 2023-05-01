@@ -3,14 +3,17 @@ name = "deep"
 version = "0.0.1"
 edition = "2021"
 
+[workspace]
+
 [dependencies]
+deep-rtin = { path = "deep-rtin" }
+deep-voronoi = { path = "deep-voronoi" }
+
 bevy = { version = "*", features = ["wayland"] }
 bevy_atmosphere = "*"
 bevy_editor_pls = "*"
 bevy_rapier3d = "*"
 colorgrad = "*"
-image = "*"
-nalgebra = "*"
 rand = "*"
 uuid = "*"
 

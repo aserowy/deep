@@ -1,21 +1,16 @@
 use bevy::prelude::Vec3;
-use image::{ImageBuffer, Luma};
-
-use self::rtin::generate_mesh_with_rtin;
-
-mod rtin;
-mod u32;
 
 pub type MeshVertices = (Vec<Vec3>, Vec<[u32; 3]>, Vec<[f32; 3]>, Vec<[f32; 4]>);
-type HeightMap = ImageBuffer<Luma<u16>, Vec<u16>>;
 
 pub fn generate_mesh(
     height_map_path: &str,
     height_multiplier: f32,
     ground_multiplier: f32,
 ) -> MeshVertices {
-    let height_map = retrieve_heigth_map(height_map_path);
-    let (vertices, indices, normals) = generate_mesh_with_rtin(height_map);
+    let height_map = deep_rtin::retrieve_heigth_map(height_map_path);
+    let errors = deep_rtin::get_errors(&height_map);
+    let triangles = deep_rtin::get_triangles(0.064, &errors);
+    let (vertices, indices, normals) = deep_rtin::generate_mesh_data(&height_map, &triangles);
 
     let mut colors = Vec::<[f32; 4]>::new();
     let mut converted_vertices: Vec<Vec3> = Vec::new();
@@ -44,8 +39,4 @@ pub fn generate_mesh(
     }
 
     (converted_vertices, indices, normals, colors)
-}
-
-fn retrieve_heigth_map(height_map_path: &str) -> HeightMap {
-    image::open(height_map_path).unwrap().to_luma16()
 }
