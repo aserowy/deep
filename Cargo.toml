@@ -6,8 +6,8 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-deep-rtin = { path = "deep-rtin" }
 deep-voronoi = { path = "deep-voronoi" }
+deep-rtin = { path = "deep-rtin" }
 
 bevy = { version = "*", features = ["wayland"] }
 bevy_atmosphere = "*"

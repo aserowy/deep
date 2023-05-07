@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::render::{mesh::Indices, render_resource::PrimitiveTopology};
-use bevy::utils::default;
 use bevy_rapier3d::prelude::{Collider, RigidBody};
 
 use self::generator::generate_mesh;
@@ -27,6 +26,8 @@ fn spawn_terrain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    testing_voronoi(&mut commands, &mut meshes, &mut materials);
+
     let (mesh_vertices, mesh_indices, normals, colors) = generate_mesh(
         "assets/height_maps/youbu_bay.png",
         HEIGHT_MULTIPLIER,
@@ -55,6 +56,72 @@ fn spawn_terrain(
         RigidBody::Fixed,
         Collider::trimesh(mesh_vertices, mesh_indices),
     ));
+}
+
+use rand::distributions::Uniform;
+use rand::Rng;
+
+fn testing_voronoi(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    let mut rng = rand::thread_rng();
+    let range1 = Uniform::new(0., 100.);
+    let range2 = Uniform::new(0., 100.);
+
+    let red_material_handle = materials.add(Color::RED.into());
+    (0..10)
+        .map(|_| (rng.sample(&range1), rng.sample(&range2)))
+        .for_each(|pnt| {
+            commands.spawn(PbrBundle {
+                mesh: meshes.add(shape::UVSphere::default().into()),
+                material: red_material_handle.clone(),
+                transform: Transform::from_xyz(pnt.0, 0.0, pnt.1),
+                ..default()
+            });
+        });
+    //
+    // let red_material_handle = materials.add(Color::RED.into());
+    // for point in &points {
+    //     commands.spawn(PbrBundle {
+    //         mesh: meshes.add(shape::UVSphere::default().into()),
+    //         material: red_material_handle.clone(),
+    //         transform: Transform::from_xyz(point.x as f32, 0.0, point.y as f32),
+    //         ..default()
+    //     });
+    // }
+    //
+    // let diagram = CentroidDiagram::new(&points).unwrap();
+    // let blue_material_handle = materials.add(Color::BLUE.into());
+    // for cell in diagram.cells {
+    //     let _points: Vec<Vec2> = cell
+    //         .points()
+    //         .into_iter()
+    //         .map(|pnt| Vec2::new(pnt.x as f32, pnt.y as f32))
+    //         .inspect(|pnt| {
+    //             commands.spawn(PbrBundle {
+    //                 mesh: meshes.add(shape::UVSphere::default().into()),
+    //                 material: blue_material_handle.clone(),
+    //                 transform: Transform::from_xyz(pnt.x, 0.0, pnt.y),
+    //                 ..default()
+    //             });
+    //         })
+    //         .collect();
+    //
+    //     // let polygon = Polygon {
+    //     //     points: _points.into_iter().collect(),
+    //     //     closed: true,
+    //     // };
+    //     //
+    //     // commands.spawn((
+    //     //     ShapeBundle {
+    //     //         path: GeometryBuilder::build_as(&polygon),
+    //     //         ..default()
+    //     //     },
+    //     //     Fill::color(Color::SEA_GREEN),
+    //     // ));
+    // }
 }
 
 fn generate_mesh_from_base_vectors(
